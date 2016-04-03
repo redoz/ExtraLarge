@@ -1,4 +1,4 @@
-Import-Module -Name c:\dev\XExcel\ExtraLarge\ExtraLarge.psm1
+Import-Module -Name c:\dev\ExtraLarge\ExtraLarge\ExtraLarge.psm1 -Force
 
 $raw = @"
 A,B,C,Date
@@ -7,12 +7,14 @@ A,B,C,Date
 "@
 
 $data = ConvertFrom-Csv -InputObject $raw
+Remove-Item C:\temp\out3.xlsx -Force
+
+New-XLFile -Path c:\temp\out3.xlsx -PassThru |
+    Add-XLSheet -Name 'Sheet 1' |
+        Add-XLTable -Name Table1 -Data $data[0] -Columns A,B,C,Date -PassThru |
+        Add-XLTable -Name Table2 -Data $data[0] -Columns A,B,C,Date  
 
 
-New-XLFile -Path c:\temp\out.xlsx `
-           -Sheets @(
-                  New-XLSheet -Name "Sheet 1"`
-                              -Tables @(
-                                  New-XLTable -Row 4 -Column 5 -Data $data
-                                  )
-              )
+return;
+
+
