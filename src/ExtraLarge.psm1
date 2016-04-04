@@ -1,9 +1,5 @@
 Set-StrictMode -Version 5
 Add-Type -Path "$($PSScriptRoot)\EPPlus.dll"
-#[string]$typeDefinitions = Get-Content -Path "$($PSScriptRoot)\Types.cs" -Raw;
-#Add-Type -TypeDefinition $typeDefinitions -ReferencedAssemblies @("$($PSScriptRoot)\EPPlus.dll","System.dll")
-
-# Import-Module -Assembly "$($PSScriptRoot)\EPPlus.dll"
 
 function New-XLFile {
 param(
@@ -89,6 +85,25 @@ process{
 end {}
 }
 
+function Get-Columns($Datum , $ColumnDefinitions) {
+    if ($ColumnDefinitions -eq $null) {
+        $ColumnDefinitions = Get-Member -InputObject $Datum -MemberType Properties | ForEach-Object -Process { @{Name = $_.Name; Property = $_.Name; Type = [Type]$_.TypeName} }
+    }
+
+    foreach ($col in $ColumnDefinitions) {
+        if (-not $col.ContainsKey('Expression')) {
+            $propertyName = $col.Property;
+            $col.Expression = { $_.$propertyName }.GetNewClosure();
+        }
+
+        if (-not $col.ContainsKey('Type')) {
+            
+        }
+    }
+
+    $ColumnDefinitions;
+}
+
 function Add-XLTable {
 param(
     [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true)]
@@ -136,16 +151,8 @@ begin{
     $rows = [System.Collections.Generic.List[object[]]]::new(); 
 
     if ($Data -is [PSObject]) {
-        if ($Columns -eq $null) {
-            $Columns = (Get-Member -InputObject $Data -MemberType Properties).Name | ForEach-Object -Process { @{Name = $_; Property = $_} }
-        }
 
-        foreach ($col in $Columns) {
-            if (-not $col.ContainsKey('Expression')) {
-                $propertyName = $col.Property;
-                $col.Expression = { $_.$propertyName }.GetNewClosure();
-            }
-        }
+        $Columns = Get-Columns -Datum $Data -ColumnDefinitions $Columns
 
         $headerRow = @($Columns.Name);
         
@@ -159,6 +166,18 @@ begin{
 
         foreach ($kvp in $Data.GetEnumerator()) {
             $rows.Add(@($kvp.Name, $kvp.Value))
+        }
+    } else {
+        [bool]$firstIteration = $true;
+        foreach ($datum in $Data) {
+            if ($firstIteration) {
+                $Columns = Get-Columns -Datum $datum -ColumnDefinitions $Columns
+                # add header row
+                $rows.Add($Columns.Name);
+                $firstIteration = $false;
+            }
+
+            $rows.Add(@($Columns | ForEach-Object -Process { $datum | ForEach-Object -Process $_.Expression }));
         }
     }
 
@@ -202,7 +221,11 @@ process{
     foreach ($dataRow in $rows) {
         [int]$currentColumn = $Column;
         foreach ($value in $dataRow) {
-            $Sheet.Cells[$currentRow, $currentColumn].Value = $value;
+            $cell = $Sheet.Cells[$currentRow, $currentColumn];
+            # TODO add this as part of the column definition
+            $cell.Style.Numberformat.Format = "General";
+            # TODO if the column is numeric type conver this to an actual number
+            $cell.Value = $value;
             
             $currentColumn++;
         }
