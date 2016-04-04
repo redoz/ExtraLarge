@@ -85,9 +85,19 @@ process{
 end {}
 }
 
+function Get-Value($Datum, $ColumnDefinition) {
+   $value = $Datum | ForEach-Object -Process $ColumnDefinition.Expression;
+   if ($value -eq $null -and $ColumnDefinition.ContainsKey('Default')) {
+        $value = $ColumnDefinition.Default;
+   }
+   $value;
+}
+
 function Get-Columns($Datum , $ColumnDefinitions) {
+    # normalize columns
     if ($ColumnDefinitions -eq $null) {
-        $ColumnDefinitions = Get-Member -InputObject $Datum -MemberType Properties | ForEach-Object -Process { @{Name = $_.Name; Property = $_.Name; Type = [Type]$_.TypeName} }
+        $ColumnDefinitions = Get-Member -InputObject $Datum -MemberType Properties | 
+            ForEach-Object -Process { @{Name = $_.Name; Property = $_.Name; Type = [Type]$_.TypeName} }
     }
 
     foreach ($col in $ColumnDefinitions) {
@@ -96,13 +106,35 @@ function Get-Columns($Datum , $ColumnDefinitions) {
             $col.Expression = { $_.$propertyName }.GetNewClosure();
         }
 
+        if (-not $col.ContainsKey('Default')) {
+            $col.Default = $null;
+        }
+
         if (-not $col.ContainsKey('Type')) {
-            
+            $value = Get-Value -Datum $Datum -Column $col;
+            if ($value -ne $null) {
+                $col.Type = $value.GetType();
+            } else {
+                $col.Type = $null;
+            }
+        }
+
+        if ($col['NumberFormat'] -ne $null) {
+            $col.NumberFormat = [XLNumberFormat]$col.NumberFormat;
+        } else {
+            $col.NumberFormat = switch ($col.Type) {
+                    {$_ -eq [String]}        {[XLNumberFormat]::Text}
+                    {$_ -eq [DateTime]}      {[XLNumberFormat]::DateTime}
+                    default                  {[XLNumberFormat]::General}
+                };
         }
     }
 
     $ColumnDefinitions;
 }
+
+Add-Type -TypeDefinition "public enum XLNumberFormat {Text,Date,General,Percent,DateTime,Time}"
+
 
 function Add-XLTable {
 param(
@@ -124,18 +156,29 @@ begin{
         $Columns = $Columns | ForEach-Object -Process {
                 switch ($_) {
                     {$_ -is [string]} { @{Name = $_; Property = $_}; break; }
-                    {$_ -is [Dictionary]} { 
-                        if ($col.Name -eq $null) {
-                            if ($col.Property -ne $null) {
-                                $col.Name = $col.Property;        
+                    {$_ -is [System.Collections.IDictionary]} { 
+                        if ($_['Name'] -eq $null) {
+                            if ($_['Property'] -ne $null) {
+                                $_.Name = $_.Property;        
                             } else {
                                 throw "Name or Property is required for column definition";
                             }
+                        } elseif ($_['Property'] -eq $null -and $_['Expression'] -eq $null) {
+                            $_.Property = $_.Name;
                         }
 
-                        if ($col.Property -eq $null) {
-                            if ($col.Expression -eq $null) {
-                                throw "Property or Expression is requierd for column definitions";
+                        if ($_['Property'] -eq $null -and $_['Expression'] -eq $null) {
+                            throw "Property or Expression is requierd for column definitions";
+                        }
+
+                        if ($_['Type'] -ne $null) {
+                            if ($_.Type -isnot [Type]) {
+                                if ($_.Type -is [string]) {
+                                    Write-Verbose -Message "Coercing string '${_.Type}' to [Type]"
+                                    $_.Type = [Type]$_.Type;
+                                } else {
+                                    throw "Type must be either String or Type";
+                                }
                             }
                         }
                         $_;
@@ -150,26 +193,13 @@ begin{
     # extract tabular data 
     $rows = [System.Collections.Generic.List[object[]]]::new(); 
 
-    if ($Data -is [PSObject]) {
-
-        $Columns = Get-Columns -Datum $Data -ColumnDefinitions $Columns
-
-        $headerRow = @($Columns.Name);
-        
-        # this is a hack, and probably slow
-        $dataRow = @($Columns | ForEach-Object -Process { $Data | ForEach-Object -Process $_.Expression })
-
-        $rows.Add($headerRow);
-        $rows.Add($dataRow);
-        
-    } elseif ($Data -is [System.Collections.IDictionary]) {
-
+    if ($Data -is [System.Collections.IDictionary]) {
         foreach ($kvp in $Data.GetEnumerator()) {
             $rows.Add(@($kvp.Name, $kvp.Value))
         }
     } else {
         [bool]$firstIteration = $true;
-        foreach ($datum in $Data) {
+        foreach ($datum in @($Data)) {
             if ($firstIteration) {
                 $Columns = Get-Columns -Datum $datum -ColumnDefinitions $Columns
                 # add header row
@@ -177,7 +207,7 @@ begin{
                 $firstIteration = $false;
             }
 
-            $rows.Add(@($Columns | ForEach-Object -Process { $datum | ForEach-Object -Process $_.Expression }));
+            $rows.Add(@($Columns | ForEach-Object -Process { Get-Value -Datum $datum -Column $_ }));
         }
     }
 
@@ -222,11 +252,32 @@ process{
         [int]$currentColumn = $Column;
         foreach ($value in $dataRow) {
             $cell = $Sheet.Cells[$currentRow, $currentColumn];
+            
             # TODO add this as part of the column definition
             $cell.Style.Numberformat.Format = "General";
-            # TODO if the column is numeric type conver this to an actual number
-            $cell.Value = $value;
-            
+            $colDef = $Columns[$currentColumn - $Column]; 
+            $colType = $colDef.Type;
+            $colValue = $null;
+            if ($currentRow -gt $Row -and $colType -ne $null -and $value -isnot $colType) {
+                $result = $null;
+                Invoke-Expression “`$result = [$colType]`$value”
+                $colValue = if ($result -ne $null) {$result} else {$colDef.Default};
+            } else {
+                $colValue = if ($value -ne $null) {$value} else {$colDef.Default};
+            }
+
+            if ($colValue -ne $null) {
+                $cell.Value = $colValue;
+                $cellFmt = $cell.Style.Numberformat;
+                switch ([XLNumberFormat]$colDef.NumberFormat) {
+                    "Text" { $cellFmt.Format = "Text" }
+                    "Date" { $cellFmt.Format = "yyyy-mm-dd" }
+                    "General" { $cellFmt.Format = "General" }
+                    "Percent" { $cellFmt.Format = "0.0%"; }
+                    "DateTime" { $cellFmt.Format = "yyyy-mm-dd h:mm.ss" }
+                    "Time" { $cellFmt.Format = "h:mm.ss" }
+                }
+            }
             $currentColumn++;
         }
         $currentRow++;
