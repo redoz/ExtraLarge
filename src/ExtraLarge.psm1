@@ -1,5 +1,4 @@
 Set-StrictMode -Version 5
-Add-Type -Path "$($PSScriptRoot)\EPPlus.dll"
 
 . $PSScriptRoot\New-XLFile.ps1
 . $PSScriptRoot\Add-XLSheet.ps1

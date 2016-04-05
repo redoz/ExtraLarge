@@ -1,4 +1,5 @@
 ﻿Function Add-XLSheet {
+[CmdletBinding()]
 [OutputType([object])]
 param(
     [Parameter(ParameterSetName = "Package", Mandatory = $true, ValueFromPipeline = $true)]

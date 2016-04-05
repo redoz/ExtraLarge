@@ -1,4 +1,5 @@
 ﻿function Add-XLChart {
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true)]
     [OfficeOpenXml.ExcelWorksheet]$Sheet,
@@ -62,6 +63,7 @@ end {}
 
 #TODO add parameter sets so Type can be typed but still optional
 function Add-XLChartSeries {
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true)]
     [OfficeOpenXml.Drawing.Chart.ExcelChart]$Chart,

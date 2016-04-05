@@ -50,6 +50,7 @@ function Get-Columns($Datum, $ColumnDefinitions) {
 }
 
 function Add-XLTable {
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true)]
     [OfficeOpenXml.ExcelWorksheet]$Sheet,
