@@ -8,6 +8,7 @@ param(
     [int]$Column = 1,
     [int]$Width = 800,
     [int]$Height = 480,
+    [System.Collections.IDictionary]$Options = @{},
     [Switch]$PassThru = $false,
     [Scriptblock]$With = $null
 
@@ -18,6 +19,12 @@ process {
     $chart.Title.Text = $Header
     $chart.SetPosition($Row, 0, $Column, 0);
     $chart.SetSize($Width, $Height);
+
+    # TODO this is an evil hack, fix!
+    $Options.GetEnumerator() | ForEach-Object -Process {
+        $prop = $_.Key
+        $chart.DataLabel.$prop = $_.Value;
+    }
 
     if ($With -ne $null) {
         $null = $chart | ForEach-Object -Process $With

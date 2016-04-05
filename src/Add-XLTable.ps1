@@ -1,5 +1,54 @@
 ﻿Add-Type -TypeDefinition "public enum XLNumberFormat {Text,Date,General,Percent,DateTime,Time}"
 
+# internal helper functions
+function Get-Value($Datum, $ColumnDefinition) {
+   $value = $Datum | ForEach-Object -Process $ColumnDefinition.Expression;
+   if ($value -eq $null -and $ColumnDefinition.ContainsKey('Default')) {
+        $value = $ColumnDefinition.Default;
+   }
+   $value;
+}
+
+function Get-Columns($Datum, $ColumnDefinitions) {
+    # normalize columns
+    if ($ColumnDefinitions -eq $null) {
+        $ColumnDefinitions = Get-Member -InputObject $Datum -MemberType Properties | 
+            ForEach-Object -Process { @{Name = $_.Name; Property = $_.Name; } }
+    }
+
+    foreach ($col in $ColumnDefinitions) {
+        if (-not $col.ContainsKey('Expression')) {
+            $propertyName = $col.Property;
+            $col.Expression = { $_.$propertyName }.GetNewClosure();
+        }
+
+        if (-not $col.ContainsKey('Default')) {
+            $col.Default = $null;
+        }
+
+        if (-not $col.ContainsKey('Type')) {
+            $value = Get-Value -Datum $Datum -Column $col;
+            if ($value -ne $null) {
+                $col.Type = $value.GetType();
+            } else {
+                $col.Type = $null;
+            }
+        }
+
+        if ($col['NumberFormat'] -ne $null) {
+            $col.NumberFormat = [XLNumberFormat]$col.NumberFormat;
+        } else {
+            $col.NumberFormat = switch ($col.Type) {
+                    {$_ -eq [String]}        {[XLNumberFormat]::Text}
+                    {$_ -eq [DateTime]}      {[XLNumberFormat]::DateTime}
+                    default                  {[XLNumberFormat]::General}
+                };
+        }
+    }
+
+    $ColumnDefinitions;
+}
+
 function Add-XLTable {
 param(
     [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true)]
@@ -11,6 +60,7 @@ param(
     [object[]]$Columns = $null,
     [int]$Row = 0,
     [int]$Column = 0,
+    [switch]$AutoSize = $false,
     [Switch]$Transpose = $false,
     [switch]$PassThru = $false
 )  
@@ -78,12 +128,6 @@ begin{
 }
 process{
 
-
-    if ($Transpose.IsPresent) {
-        throw "Not implemented yet";
-        #transpose data
-    }
-
     # find empty location in sheet that can accomodate data
     [int]$tableHeight = $rows.Count;
     [int]$tableWidth = $rows[0].Count;
@@ -115,15 +159,30 @@ process{
     foreach ($dataRow in $rows) {
         [int]$currentColumn = $Column;
         foreach ($value in $dataRow) {
-            $cell = $Sheet.Cells[$currentRow, $currentColumn];
+            if ($Transpose.IsPresent) {
+                $cell = $Sheet.Cells[$currentColumn, $currentRow];
+            } else {
+                $cell = $Sheet.Cells[$currentRow, $currentColumn];
+            }
             
             $colDef = $Columns[$currentColumn - $Column]; 
             $colType = $colDef.Type;
             $colValue = $null;
+            # don't conver the header
+            # TODO maybe exclude the header from the $rows data
             if ($currentRow -gt $Row -and $colType -ne $null -and $value -isnot $colType) {
                 $result = $null;
-                Invoke-Expression “`$result = [$colType]`$value”
-                $colValue = if ($result -ne $null) {$result} else {$colDef.Default};
+                if ($value -eq $null -or $value -eq '') {
+                    $colValue = $colDef.Default;
+                } else {
+                    Invoke-Expression “`$result = [$colType]`$value”
+                    if ($result -eq $null) {
+                        Write-Warning -Message "Failed to convert value '$value' to type '$colType'";
+                        $result = $colDef.Default;
+                    } else {
+                        $colValue = $result;
+                    }
+                }
             } else {
                 $colValue = if ($value -ne $null) {$value} else {$colDef.Default};
             }
@@ -147,9 +206,18 @@ process{
     }
 
     # create table
-    $tableRange = [OfficeOpenXml.ExcelRange]::GetAddress($Row, $Column, $Row + $tableHeight - 1, $Column + $tableWidth - 1);
+    if ($Transpose.IsPresent) {
+        $tableRange = [OfficeOpenXml.ExcelRange]::GetAddress($Row, $Column, $Row + $tableWidth - 1, $Column + $tableHeight - 1);
+    } else {
+        $tableRange = [OfficeOpenXml.ExcelRange]::GetAddress($Row, $Column, $Row + $tableHeight - 1, $Column + $tableWidth - 1);
+    }
     $table = $Sheet.Tables.Add($tableRange, $Name)
-
+    if ($AutoSize) {
+        $Sheet.Cells[$tableRange].AutoFitColumns();
+    }
+    if ($Transpose.IsPresent) {
+        $table.ShowHeader = $false;
+    }
     if ($PassThru.IsPresent) {
         Write-Output -InputObject $Sheet
     }
