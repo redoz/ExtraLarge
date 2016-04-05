@@ -20,12 +20,34 @@ process {
     $chart.SetPosition($Row, 0, $Column, 0);
     $chart.SetSize($Width, $Height);
 
-    # TODO this is an evil hack, fix!
-    $Options.GetEnumerator() | ForEach-Object -Process {
-        $prop = $_.Key
-        $chart.DataLabel.$prop = $_.Value;
+    # TODO this kinda sucks
+    if ([bool]$Options['ShowPercent']) {
+        $chart.DataLabel.ShowPercent= $true;
     }
 
+    if ([bool]$Options['ShowValue']) {
+        $chart.DataLabel.ShowValue = $true;
+    }
+
+    if ([bool]$Options['NoLegend']) {
+        $chart.Legend.Remove();
+    }
+
+    if ([bool]$Options['HideYAxis']) {
+        $chart.YAxis.Deleted = $true;
+        $chart.YAxis.MajorTickMark = [OfficeOpenXml.Drawing.Chart.eAxisTickMark]::None;
+        $chart.YAxis.MinorTickMark = [OfficeOpenXml.Drawing.Chart.eAxisTickMark]::None;
+
+        # TODO this deletes all majorGridLines which I'm pretty sure is not correct
+        $chartXml = $chart.ChartXml;
+        $nsuri = $chartXml.DocumentElement.NamespaceURI;
+        $nsm = [System.Xml.XmlNamespaceManager]::new($chartXml.NameTable);
+        $nsm.AddNamespace("c", $nsuri);
+
+        $gridLines = $chartXml.SelectNodes('//c:majorGridlines', $nsm)
+        $null = $gridLines | ForEach-Object -Process {$_.ParentNode.RemoveChild($_);}
+
+    }
     if ($With -ne $null) {
         $null = $chart | ForEach-Object -Process $With
     }
