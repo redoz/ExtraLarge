@@ -21,3 +21,13 @@ New-XLFile -Path out.xlsx -PassThru |
                                                                 Add-XLChartSeries -X "Table2[Date]" -Y "Table2[B]" -Type AreaStacked -PassThru |
                                                                 Add-XLChartSeries -X "Table2[Date]" -Y "Table2[C]" -Type AreaStacked -PassThru } -Column 6
 ```
+
+## Todo
+* Add tests
+* Add parameter sets per chart type to Add-XLChart to enable type safe options
+* Add documentation
+* Add samples
+* Add pivot table/chart support
+* Add Get-* functions
+* Find shorter/cleaner syntax for Add-XLTable -Columns parameter
+* ...
