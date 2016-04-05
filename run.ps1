@@ -1,4 +1,4 @@
-Import-Module -Name "$PSScriptRoot\src\ExtraLarge.psm1" -Force
+Import-Module -Name "$PSScriptRoot\src\ExtraLarge.psd1" -Force -Verbose
 
 $raw = @"
 A,B,C,Date
@@ -7,9 +7,8 @@ A,B,C,Date
 "@
 
 $data = ConvertFrom-Csv -InputObject $raw
-Remove-Item C:\temp\out3.xlsx -Force
 
-New-XLFile -Path c:\temp\out3.xlsx -PassThru |
+New-XLFile -Path c:\temp\out.xlsx -PassThru |
     Add-XLSheet -Name 'Sheet 1' |
         Add-XLTable -Name Table1 -Data $data -Columns @{Name='A';Type=[int]},@{Name='B';Type=[int]},@{Name='C';Type=[float];NumberFormat='Percent'},@{Name='Date';Type=[DateTime]} -PassThru |
         Add-XLTable -Name Table2 -Data $data -Columns  @{Name='A';Type=[int]},@{Name='B';Type=[int]},@{Name='C';Type=[float];Default=30},@{Name='D';Type=[float];Default=99},@{Name='Date';Type=[DateTime];NumberFormat=[XLNumberFormat]::Date} -PassThru |
