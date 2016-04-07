@@ -1,4 +1,5 @@
 ﻿Add-Type -TypeDefinition "public enum XLNumberFormat {Text,Date,General,Percent,DateTime,Time}"
+Add-Type -TypeDefinition "public enum XLTotalsFunction {Average=101,Count=102,CountA=103,Max=104,Min=105,Product=106,Stdev=107,StdevP=108,Sum=109,Var=110,VarP=111}"
 
 # internal helper functions
 function Get-Value($Datum, $ColumnDefinition) {
@@ -43,6 +44,9 @@ function Get-Columns($Datum, $ColumnDefinitions) {
                     {$_ -eq [DateTime]}      {[XLNumberFormat]::DateTime}
                     default                  {[XLNumberFormat]::General}
                 };
+        }
+        if ($col['Totals'] -eq $null) {
+            $col.Totals = $null;
         }
     }
 
@@ -133,26 +137,24 @@ process{
     [int]$tableHeight = $rows.Count;
     [int]$tableWidth = $rows[0].Count;
 
+    if ($Sheet.Dimension -ne $null) {
+        $lastRow = $Sheet.Dimension.End.Row;
+        $lastCol = $Sheet.Dimension.End.Column;
+        # for some reason $Sheet.Dimension.End doens't include tables Total rows
+        $lastTableRow = ($Sheet.Tables.Address.End.Row | Measure-Object -Maximum).Maximum;
+        $lastRow = [Math]::Max($lastRow, $lastTableRow);
+    } else {
+        $lastRow = 0;
+        $lastCol = 0;
+    }
+
     if ($Row -eq 0 -and $Column -eq 0) {
-        if ($Sheet.Dimension -ne $null) {
-            $Row = $Sheet.Dimension.End.Row + 2;
-            $Column = $Sheet.Dimension.Start.Column;
-        } else {
-            $Row = 2;
-            $Column = 2;
-        }
+        $Row = $lastRow + 2;
+        $Column = 2;
     } elseif ($Row -eq 0) {
-        if ($Sheet.Dimension -ne $null) {
-            $Row = $Sheet.Dimension.End.Row + 2;
-        } else {
-            $Row = 2;
-        }
+        $Row = $lastRow + 2;
     } elseif ($Column -eq 0) {
-        if ($Sheet.Dimension -ne $null) {
-            $Column = $Sheet.Dimension.End.Column + 2;        
-        } else {
-            $Column = 2;
-        }
+        $Column = $lastCol + 2;
     }
 
     # write data into sheet
@@ -169,17 +171,18 @@ process{
             $colDef = $Columns[$currentColumn - $Column]; 
             $colType = $colDef.Type;
             $colValue = $null;
-            # don't conver the header
             # TODO maybe exclude the header from the $rows data
+
+            # don't convert the header
             if ($currentRow -gt $Row -and $colType -ne $null -and $value -isnot $colType) {
                 $result = $null;
-                if ($value -eq $null -or $value -eq '') {
+                if ($value -eq $null -or $value -eq '' -or ($value -is [Single] -and [Single]::IsNaN($value)) -or ($value -is [Double] -and [Double]::IsNaN($value))) {
                     $colValue = $colDef.Default;
                 } else {
                     Invoke-Expression “`$result = [$colType]`$value”
                     if ($result -eq $null) {
                         Write-Warning -Message "Failed to convert value '$value' to type '$colType'";
-                        $result = $colDef.Default;
+                        $colValue = $colDef.Default;
                     } else {
                         $colValue = $result;
                     }
@@ -213,11 +216,42 @@ process{
         $tableRange = [OfficeOpenXml.ExcelRange]::GetAddress($Row, $Column, $Row + $tableHeight - 1, $Column + $tableWidth - 1);
     }
     $table = $Sheet.Tables.Add($tableRange, $Name)
+
     if ($AutoSize) {
         $Sheet.Cells[$tableRange].AutoFitColumns();
     }
     if ($Transpose.IsPresent) {
         $table.ShowHeader = $false;
+    } else {
+        if ($Columns | Where-Object -Property Totals -NE -Value $null) {
+            
+            $totalsColumn = 0;
+            # TODO replace with for loop
+            foreach ($col in $Columns) {
+                if ($col.Totals -ne $null) {
+                    
+                    try {
+                        $xlTotalsFunction = [XLTotalsFunction]$col.Totals;
+                    } catch {
+                        $xlTotalsFunction = $null;
+                    }
+
+                    $totalsFormula = $null;
+                    if ($xlTotalsFunction -ne $null) {                        
+                        $totalsFormula = '=SUBTOTAL({0},{1}[{2}])' -f [int]$xlTotalsFunction,$table.Name,$col.Name;
+                    } elseif ($col.Totals -is [string] -and $col.Totals[0] -eq '=') {
+                        $totalsForumla = $col.Totals;
+                    } else {
+                        throw "Invalid 'Total' function/formula: " + $col.Totals
+                    }
+                    $table.Columns[$totalsColumn].TotalsRowFormula = $totalsFormula;
+                }
+                $totalsColumn++;   
+            }
+
+            $table.ShowTotal= $true;
+
+        }
     }
     if ($PassThru.IsPresent) {
         Write-Output -InputObject $Sheet

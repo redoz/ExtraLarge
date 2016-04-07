@@ -10,7 +10,7 @@ param(
 )
 begin {
     $resolvedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
-    if (Test-Path -Path $resolvedPath) {
+    if (Test-Path -Path $resolvedPath -PathType Leaf) {
         if ($Force.IsPresent) {
             Remove-Item -Path $resolvedPath -Force
         } else {
