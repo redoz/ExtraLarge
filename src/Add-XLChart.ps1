@@ -52,6 +52,12 @@ process {
         $null = $gridLines | ForEach-Object -Process {$_.ParentNode.RemoveChild($_);}
 
     }
+    
+    if ([bool]$Options['XAxisOnTicks']) {
+        # TODO not sure why this has to be set on the YAxis, makes little sense
+        $chart.YAxis.CrossBetween = [OfficeOpenXml.Drawing.Chart.eCrossBetween]::MidCat
+    }
+    
     $xlChart = [XLChart]::new($Sheet.Owner, $chart)
     
     if (-not [string]::IsNullOrEmpty($XSeries)) {
