@@ -57,7 +57,7 @@ function Add-XLTable {
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true)]
-    [OfficeOpenXml.ExcelWorksheet]$Sheet,
+    [XLSheet]$Sheet,
     [Parameter(Mandatory = $true)]
     [string]$Name,
     [Parameter(Mandatory = $true)]
@@ -137,11 +137,12 @@ process{
     [int]$tableHeight = $rows.Count;
     [int]$tableWidth = $rows[0].Count;
 
-    if ($Sheet.Dimension -ne $null) {
-        $lastRow = $Sheet.Dimension.End.Row;
-        $lastCol = $Sheet.Dimension.End.Column;
+    $worksheet = $Sheet.Worksheet;
+    if ($worksheet.Dimension -ne $null) {
+        $lastRow = $worksheet.Dimension.End.Row;
+        $lastCol = $worksheet.Dimension.End.Column;
         # for some reason $Sheet.Dimension.End doens't include tables Total rows
-        $lastTableRow = ($Sheet.Tables.Address.End.Row | Measure-Object -Maximum).Maximum;
+        $lastTableRow = ($worksheet.Tables.Address.End.Row | Measure-Object -Maximum).Maximum;
         $lastRow = [Math]::Max($lastRow, $lastTableRow);
     } else {
         $lastRow = 0;
@@ -163,9 +164,9 @@ process{
         [int]$currentColumn = $Column;
         foreach ($value in $dataRow) {
             if ($Transpose.IsPresent) {
-                $cell = $Sheet.Cells[$currentColumn, $currentRow];
+                $cell = $worksheet.Cells[$currentColumn, $currentRow];
             } else {
-                $cell = $Sheet.Cells[$currentRow, $currentColumn];
+                $cell = $worksheet.Cells[$currentRow, $currentColumn];
             }
             
             $colDef = $Columns[$currentColumn - $Column]; 
@@ -215,10 +216,10 @@ process{
     } else {
         $tableRange = [OfficeOpenXml.ExcelRange]::GetAddress($Row, $Column, $Row + $tableHeight - 1, $Column + $tableWidth - 1);
     }
-    $table = $Sheet.Tables.Add($tableRange, $Name)
+    $table = $worksheet.Tables.Add($tableRange, $Name)
 
     if ($AutoSize) {
-        $Sheet.Cells[$tableRange].AutoFitColumns();
+        $worksheet.Cells[$tableRange].AutoFitColumns();
     }
     if ($Transpose.IsPresent) {
         $table.ShowHeader = $false;

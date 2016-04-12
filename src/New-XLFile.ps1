@@ -1,4 +1,5 @@
 ﻿function New-XLFile {
+[OutputType([XLFile])]
 param(
     [Parameter(Position = 0, Mandatory=$true)]
     [string]$Path,
@@ -20,7 +21,7 @@ begin {
     $package = [OfficeOpenXml.ExcelPackage]::new($resolvedPath);
     
     if ($PassThru.IsPresent) {
-        return $package;
+        return [XLFile]::new($package);
     }
 }
 process {
@@ -36,5 +37,4 @@ end {
         $package.Save();
     }
 }
- 
 }

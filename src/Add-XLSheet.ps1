@@ -1,9 +1,10 @@
 ﻿Function Add-XLSheet {
 [CmdletBinding()]
-[OutputType([object])]
+[OutputType([XLSheet])]
 param(
-    [Parameter(ParameterSetName = "Package", Mandatory = $true, ValueFromPipeline = $true)]
-    [OfficeOpenXml.ExcelPackage]$Package,
+    [Alias("Package")]
+    [Parameter(ParameterSetName = "File", Mandatory = $true, ValueFromPipeline = $true)]
+    [XLFile]$File,
     [Parameter(ParameterSetName = "Path", Mandatory = $true)]
     [string]$Path,
     [string]$Name,
@@ -14,29 +15,36 @@ param(
 )
 begin{}
 process{
+    $package = $null
     if ($PSCmdlet.ParameterSetName -eq "Path") {
         $resolvedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path);
         if (-not (Test-Path -LiteralPath $resolvedPath)) {
             throw "Path not found: '$Path'";
         }
-        $Package = [OfficeOpenXml.ExcelPackage]::new($resolvedPath);
+        $package = [OfficeOpenXml.ExcelPackage]::new($resolvedPath)
+    } else {
+        $package = $File.Package
     }
 
-    if ($Package.Workbook.Worksheets[$Name] -ne $null) {
+    if ($package.Workbook.Worksheets[$Name] -ne $null) {
         if ($Force.IsPresent) {
             Write-Verbose -Message "Deleting worksheet: '${Name}'"
-            $Package.Workbook.Worksheets.Delete($Name);
+            $package.Workbook.Worksheets.Delete($Name)
         }
     }
 
-    $worksheet = $Package.Workbook.Worksheets.Add($Name);
+    $worksheet = [XLSheet]::new($package, $package.Workbook.Worksheets.Add($Name))
 
     if ($With -ne $null) {
         $worksheet | ForEach-Object -Process $With
     }
 
     if ($PassThru.IsPresent) {
-        Write-Output -InputObject $Package
+        if ($File -ne $null) {
+            Write-Output -InputObject $File
+        } else {
+            Write-Output -InputObject [XLFile]::new($package)
+        }
     } else {
         Write-Output -InputObject $worksheet
     }

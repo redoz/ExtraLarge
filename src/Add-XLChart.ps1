@@ -1,10 +1,12 @@
 ﻿function Add-XLChart {
+[OutputType([XLChart])]
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true)]
-    [OfficeOpenXml.ExcelWorksheet]$Sheet,
+    [XLSheet]$Sheet,
     [string]$Header,
     [OfficeOpenXml.Drawing.Chart.eChartType]$Type,
+    [string]$XSeries,
     [int]$Row = 1,
     [int]$Column = 1,
     [int]$Width = 800,
@@ -16,18 +18,19 @@ param(
 );
 begin {}
 process {
-    $chart = $Sheet.Drawings.AddChart("Chart" + [Guid]::NewGuid().ToString('n'), $Type);
+    $worksheet = $Sheet.Worksheet
+    $chart = $worksheet.Drawings.AddChart("Chart" + [Guid]::NewGuid().ToString('n'), $Type)
     $chart.Title.Text = $Header
-    $chart.SetPosition($Row, 0, $Column, 0);
-    $chart.SetSize($Width, $Height);
+    $chart.SetPosition($Row, 0, $Column, 0)
+    $chart.SetSize($Width, $Height)
 
     # TODO this kinda sucks
     if ([bool]$Options['ShowPercent']) {
-        $chart.DataLabel.ShowPercent= $true;
+        $chart.DataLabel.ShowPercent= $true
     }
 
     if ([bool]$Options['ShowValue']) {
-        $chart.DataLabel.ShowValue = $true;
+        $chart.DataLabel.ShowValue = $true
     }
 
     if ([bool]$Options['NoLegend']) {
@@ -49,13 +52,19 @@ process {
         $null = $gridLines | ForEach-Object -Process {$_.ParentNode.RemoveChild($_);}
 
     }
+    $xlChart = [XLChart]::new($Sheet.Owner, $chart)
+    
+    if (-not [string]::IsNullOrEmpty($XSeries)) {
+        $xlChart.XSeries = $XSeries
+    }
+    
     if ($With -ne $null) {
-        $null = $chart | ForEach-Object -Process $With
+        $null = $xlChart | ForEach-Object -Process $With
     }
     if ($PassThru.IsPresent) {
         $Sheet;
     } elseif ($With -eq $null) {
-        $chart;
+        $xlChart;
     }
 }
 end {}
@@ -66,9 +75,8 @@ function Add-XLChartSeries {
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true)]
-    [OfficeOpenXml.Drawing.Chart.ExcelChart]$Chart,
+    [XLChart]$Chart,
     [object]$Header = $null,
-    [Parameter(Mandatory = $true)]
     [string]$XSeries,
     [Parameter(Mandatory = $true)]
     [string]$YSeries,
@@ -77,12 +85,22 @@ param(
 )
 begin{}
 process{
-    if ($Type -eq $null) {
-        $series = $Chart.Series.Add($YSeries, $XSeries);
+    $excelChart = $Chart.Chart;
+    
+    if ($XSeries -eq '') {
+        $XSeries = $Chart.XSeries;
+    }
+    
+    if ($XSeries -eq '') {
+        throw "XSeries was not provided and the chart doesn't have one specified."
+    }
+    
+    if ($Type -eq $null) { 
+        $series = $excelChart.Series.Add($YSeries, $XSeries);
     } else {
-        $subChart = $Chart.PlotArea.ChartTypes | Where-Object -FilterScript {$_.ChartType -eq [OfficeOpenXml.Drawing.Chart.eChartType]$Type}
+        $subChart = $excelChart.PlotArea.ChartTypes | Where-Object -FilterScript {$_.ChartType -eq [OfficeOpenXml.Drawing.Chart.eChartType]$Type}
         if ($subChart -eq $null) {
-            $subChart = $Chart.PlotArea.ChartTypes.Add([OfficeOpenXml.Drawing.Chart.eChartType]$Type);
+            $subChart = $excelChart.PlotArea.ChartTypes.Add([OfficeOpenXml.Drawing.Chart.eChartType]$Type);
         }
         $series = $subChart.Series.Add($YSeries, $XSeries);
     }
