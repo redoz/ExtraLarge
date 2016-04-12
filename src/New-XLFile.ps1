@@ -18,8 +18,12 @@ begin {
             throw "File exists: '${resolvedPath}', use -Force to overwrite.";
         }
     }
-    $package = [OfficeOpenXml.ExcelPackage]::new($resolvedPath);
     
+    try {
+        $package = [OfficeOpenXml.ExcelPackage]::new($resolvedPath);
+    } catch {
+        throw;
+    }
     if ($PassThru.IsPresent) {
         return [XLFile]::new($package);
     }
