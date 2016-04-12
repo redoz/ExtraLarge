@@ -53,7 +53,7 @@ process {
 
     }
     
-    if ([bool]$Options['XAxisOnTicks']) {
+    if (-not [bool]$Options['XAxisBetweenTicks']) {
         # TODO not sure why this has to be set on the YAxis, makes little sense
         $chart.YAxis.CrossBetween = [OfficeOpenXml.Drawing.Chart.eCrossBetween]::MidCat
     }
