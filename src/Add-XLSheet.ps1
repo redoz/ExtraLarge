@@ -16,7 +16,7 @@ begin{}
 process{
     if ($PSCmdlet.ParameterSetName -eq "Path") {
         $resolvedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path);
-        if (!Test-Path -LiteralPath $resolvedPath) {
+        if (-not (Test-Path -LiteralPath $resolvedPath)) {
             throw "Path not found: '$Path'";
         }
         $Package = [OfficeOpenXml.ExcelPackage]::new($resolvedPath);
