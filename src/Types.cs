@@ -40,6 +40,8 @@ public class XLSheet : XLBase {
         this.Worksheet = worksheet;
     }
     
+    public string Name { get { return this.Worksheet.Name; } }
+    
     public OfficeOpenXml.ExcelWorksheet Worksheet {get; private set;}
     
     public static implicit operator XLSheet(OfficeOpenXml.ExcelWorksheet sheet) {
