@@ -142,7 +142,11 @@ process{
         $lastRow = $worksheet.Dimension.End.Row;
         $lastCol = $worksheet.Dimension.End.Column;
         # for some reason $Sheet.Dimension.End doens't include tables Total rows
-        $lastTableRow = ($worksheet.Tables.Address.End.Row | Measure-Object -Maximum).Maximum;
+        if ($worksheet.Tables.Count -gt 0) {
+            $lastTableRow = ($worksheet.Tables.Address.End.Row | Measure-Object -Maximum).Maximum;
+        } else {
+            $lastTableRow = 1;
+        }
         $lastRow = [Math]::Max($lastRow, $lastTableRow);
     } else {
         $lastRow = 0;
