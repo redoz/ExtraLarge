@@ -22,6 +22,7 @@ try {
 . $PSScriptRoot\Select-XLRange.ps1
 . $PSScriptRoot\Join-XLRange.ps1
 . $PSScriptRoot\Split-XLRange.ps1
+. $PSScriptRoot\Clear-XLRange.ps1
 
 Export-ModuleMember -Function New-XLFile
 Export-ModuleMember -Function Add-XLSheet
@@ -35,6 +36,7 @@ Export-ModuleMember -Function Get-XLFile
 Export-ModuleMember -Function Select-XLRange
 Export-ModuleMember -Function Join-XLRange
 Export-ModuleMember -Function Split-XLRange
+Export-ModuleMember -Function Clear-XLRange
 <#
 copy C:\dev\ExtraLarge\src -Destination $env:USERPROFILE\Documents\WindowsPowerShell\Modules\ExtraLarge -Container -Recurse -Verbose
 Publish-Module -WhatIf -Name ExtraLarge -NuGetApiKey <apikey>
