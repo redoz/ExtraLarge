@@ -1,4 +1,4 @@
-Import-Module -Name "${PSScriptRoot}\..\ExtraLarge\ExtraLarge.psm1" -Force
+Import-Module -Name "${PSScriptRoot}\..\src\ExtraLarge.psd1" -Force -Verbose
 Describe "New-XLFile" {
     Context "There are no worksheets added" {
         It "creates a default worksheet" {
@@ -79,7 +79,7 @@ Describe "Add-XLSheet" {
                 Remove-Item -Path $path -Force
             }
             New-XLFile -Path $path -PassThru | 
-                Add-XLSheet -Name "X" -PassThru:$true | %{$_ -is [OfficeOpenXml.ExcelPackage]} | Should Be $true
+                Add-XLSheet -Name "X" -PassThru:$true | %{$_ -is [XLFile]} | Should Be $true
             $path | Should Exist
         }
     }
@@ -91,7 +91,7 @@ Describe "Add-XLSheet" {
                 Remove-Item -Path $path -Force
             }
             New-XLFile -Path $path -PassThru | 
-                Add-XLSheet -Name "X" -PassThru:$false | %{$_ -is [OfficeOpenXml.ExcelWorksheet]} | Should Be $true
+                Add-XLSheet -Name "X" -PassThru:$false | %{$_ -is [XLSheet]} | Should Be $true
             $path | Should Exist
         }
     }

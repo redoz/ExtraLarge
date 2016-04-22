@@ -2,19 +2,19 @@ Function Get-XLSheet {
 [CmdletBinding()]
 [OutputType([XLSheet])]
 param(
-    [Parameter(ParameterSetName = "FileAndName", Mandatory = $true, ValueFromPipeline = $true)]
-    [Parameter(ParameterSetName = "FileAndIndex", Mandatory = $true, ValueFromPipeline = $true)]
-    [Parameter(ParameterSetName = "File", Mandatory = $true, ValueFromPipeline = $true)]
+    [Parameter(ParameterSetName = "FileAndName", Mandatory = $true, ValueFromPipeline = $true, Position = 0)]
+    [Parameter(ParameterSetName = "FileAndIndex", Mandatory = $true, ValueFromPipeline = $true, Position = 0)]
+    [Parameter(ParameterSetName = "File", Mandatory = $true, ValueFromPipeline = $true, Position = 0)]
     [XLFile]$File,
-    [Parameter(ParameterSetName = "PathAndName", Mandatory = $true)]
-    [Parameter(ParameterSetName = "PathAndIndex", Mandatory = $true)]
-    [Parameter(ParameterSetName = "Path", Mandatory = $true)]
+    [Parameter(ParameterSetName = "PathAndName", Mandatory = $true, Position = 0)]
+    [Parameter(ParameterSetName = "PathAndIndex", Mandatory = $true, Position = 0)]
+    [Parameter(ParameterSetName = "Path", Mandatory = $true, Position = 0)]
     [string]$Path,
-    [Parameter(ParameterSetName = "FileAndName", Mandatory = $true)]
-    [Parameter(ParameterSetName = "PathAndName", Mandatory = $true)]
+    [Parameter(ParameterSetName = "FileAndName", Mandatory = $true, Position = 1)]
+    [Parameter(ParameterSetName = "PathAndName", Mandatory = $true, Position = 1)]
     [string]$Name,
-    [Parameter(ParameterSetName = "FileAndIndex", Mandatory = $true)]
-    [Parameter(ParameterSetName = "PathAndIndex", Mandatory = $true)]
+    [Parameter(ParameterSetName = "FileAndIndex", Mandatory = $true, Position = 1)]
+    [Parameter(ParameterSetName = "PathAndIndex", Mandatory = $true, Position = 1)]
     [int]$Index
     
 )
@@ -38,8 +38,9 @@ process{
         [XLSheet]::new($File.Package, $worksheet)
     } elseif ($PSCmdlet.ParameterSetName.EndsWith("Index")) {
         $worksheet = $File.Package.Workbook.Worksheets.Item($Index)
-                        
-        [XLSheet]::new($File.Package, $worksheet)
+        if ($worksheet -ne $null) {
+            [XLSheet]::new($File.Package, $worksheet)
+        }
     } else {
         $File.Package.Workbook.Worksheets | Foreach-Object -Process { [XLSheet]::new($File.Package, $_) }
     }
