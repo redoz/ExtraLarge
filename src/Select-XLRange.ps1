@@ -17,21 +17,21 @@ param(
     
     [int]$ToColumn = $FromColumn,
     
-    [string[]]$Header = $null,
+    [string[]]$Headers = $null,
     
-    [Switch]$HasHeader = $false
+    [Switch]$HasHeaders = $false
 )  
 begin{
     [OfficeOpenXml.ExcelRange]$range = $Sheet.Worksheet.Cells.Item($FromRow, $FromColumn, $ToRow, $ToColumn)
     
-    if ($Header -ne $null -and $Header.Length -ne ($range.Columns)) {
+    if ($Headers -ne $null -and $Headers.Length -ne $range.Columns) {
         throw "Header contains $($Header.Length) elements but the selection is for $($range.Columns) columns"
     }
 
     $xlRange = [XLRange]::new($Sheet.Owner, $range)
     # TODO move these to ctor so they're not publically writeable
-    $xlRange.Header = $Header
-    $xlRange.HasHeader = $HasHeader.IsPresent
+    $xlRange.Headers = $Headers
+    $xlRange.HasHeaders = $HasHeaders.IsPresent
     $PSCmdlet.WriteObject($xlRange, $false)
     
 }

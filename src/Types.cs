@@ -67,9 +67,9 @@ public class XLRange : XLBase, IEnumerable<PSObject> {
     
     public OfficeOpenXml.ExcelRange Range {get; private set;}
     
-    public string[] Header {get; set;}
+    public string[] Headers {get; set;}
     
-    public bool HasHeader { get;set; }
+    public bool HasHeaders { get;set; }
     
     public IEnumerator<PSObject> GetEnumerator() {
         // TODO this is for "Data" only, should have properties indicating what format was requested
@@ -78,9 +78,9 @@ public class XLRange : XLBase, IEnumerable<PSObject> {
         int columnOffset = this.Range.Start.Column;
 
         string[] columns;
-        if (this.Header != null)
-            columns = this.Header;
-        else if (this.HasHeader) {
+        if (this.Headers != null)
+            columns = this.Headers;
+        else if (this.HasHeaders) {
             columns = new string[this.Range.Columns];
             for (int i = 0; i < columns.Length; i++)
                 columns[i] = this.Range.Worksheet.Cells[rowOffset, columnOffset + i].Text;
@@ -91,7 +91,7 @@ public class XLRange : XLBase, IEnumerable<PSObject> {
                 columns[i] = OfficeOpenXml.ExcelCellAddress.GetColumnLetter(columnOffset + i);
         }
         
-        for (int rowNum = this.HasHeader ? 1 : 0 ; rowNum < this.Range.Rows; rowNum++)
+        for (int rowNum = this.HasHeaders ? 1 : 0 ; rowNum < this.Range.Rows; rowNum++)
         {
             PSObject row = new PSObject();
             

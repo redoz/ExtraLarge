@@ -6,7 +6,6 @@ param(
     [switch]$NoDefaultSheet = $false,
     [switch]$PassThru = $false,
     [switch]$Force = $false,
-    # TODO make -With work
     [scriptblock]$With = $null
 )
 begin {
@@ -30,6 +29,10 @@ process {
     
     $xlFile = [XLFile]::new($package)
     $createdFiles.Add($xlFile)
+    
+    if ($With -ne $null) {
+        $xlFile | ForEach-Object -Process $With
+    }
         
     if ($PassThru.IsPresent) {
         $PSCmdlet.WriteObject($xlFile)
