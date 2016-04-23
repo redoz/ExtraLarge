@@ -18,6 +18,7 @@ try {
 
 . $PSScriptRoot\Get-XLSheet.ps1
 . $PSScriptRoot\Get-XLFile.ps1
+. $PSScriptRoot\Save-XLFile.ps1
 
 . $PSScriptRoot\Select-XLRange.ps1
 . $PSScriptRoot\Join-XLRange.ps1
@@ -32,6 +33,7 @@ Export-ModuleMember -Function Add-XLChartSeries
 
 Export-ModuleMember -Function Get-XLSheet
 Export-ModuleMember -Function Get-XLFile
+Export-ModuleMember -Function Save-XLFile
 
 Export-ModuleMember -Function Select-XLRange
 Export-ModuleMember -Function Join-XLRange

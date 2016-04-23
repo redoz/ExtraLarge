@@ -26,13 +26,22 @@ param(
     [Switch]$PassThru = $false
 )  
 begin{
-    $excelRange = $null 
+    [OfficeOpenXml.ExcelRange]$excelRange = $null 
     if ($PSCmdlet.ParameterSetName -eq "Sheet") {
         $excelRange  = $Sheet.Worksheet.Cells.Item($FromRow, $FromColumn, $ToRow, $ToColumn)  
     } else {
-        $excelRange = $Range.Range 
+        $excelRange = $Range.Range
     }
     
+    foreach ($table in $excelRange.Worksheet.Tables) {
+        if (($excelRange.Start.Column -ge $table.Address.Start.Column -and $excelRange.Start.Column -le $table.Address.End.Column) -or
+            ($excelRange.Start.Row -ge $table.Address.Start.Row -and $excelRange.Start.Row -le $table.Address.End.Row) -or 
+           (($excelRange.End.Column -ge $table.Address.Start.Column -and $excelRange.End.Column -le $table.Address.End.Column) -or
+            ($excelRange.End.Row -ge $table.Address.Start.Row -and $excelRange.End.Row -le $table.Address.End.Row))) {
+            
+            throw "Range overlaps with existing table."
+        }        
+    }
     $excelRange.Merge = $true
     
     if ($PassThru.IsPresent) {

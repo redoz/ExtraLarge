@@ -1,7 +1,7 @@
 ﻿function New-XLFile {
 [OutputType([XLFile])]
 param(
-    [Parameter(Position = 0, Mandatory=$true)]
+    [Parameter(Position = 0, Mandatory=$true, ValueFromPipeline = $true)]
     [string]$Path,
     [switch]$NoDefaultSheet = $false,
     [switch]$PassThru = $false,
@@ -10,6 +10,9 @@ param(
     [scriptblock]$With = $null
 )
 begin {
+    $createdFiles = [System.Collections.Generic.List[XLFile]]::new()
+}
+process {
     $resolvedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path)
     if (Test-Path -Path $resolvedPath -PathType Leaf) {
         if ($Force.IsPresent) {
@@ -24,21 +27,25 @@ begin {
     } catch {
         throw;
     }
+    
+    $xlFile = [XLFile]::new($package)
+    $createdFiles.Add($xlFile)
+        
     if ($PassThru.IsPresent) {
-        return [XLFile]::new($package);
-    }
-}
-process {
+        $PSCmdlet.WriteObject($xlFile)
+    }    
 }
 end {
-
-    if ($package.Workbook.Worksheets.Count -eq 0) {
-        if (-not $NoDefaultSheet.IsPresent) {
-            Write-Verbose -Message "Creating default worksheet: 'Default'"
-            [void]$package.Workbook.Worksheets.Add("Default");
+    foreach ($file in $createdFiles) {
+        if ($file.Package.Workbook.Worksheets.Count -eq 0) {
+            if (-not $NoDefaultSheet.IsPresent) {
+                Write-Verbose -Message "Creating default worksheet: 'Default'"
+                [void]$file.Package.Workbook.Worksheets.Add("Default");
+                $file.Save();
+            }
+        } else { 
+            $file.Save();
         }
-    } else { 
-        $package.Save();
     }
 }
 }
