@@ -1,4 +1,6 @@
 # ExtraLarge
+[![Build status](https://ci.appveyor.com/api/projects/status/mujcrkjo8hyjpy3r/branch/master?svg=true)](https://ci.appveyor.com/project/redoz/extralarge/branch/master)
+
 Create Excel files using PowerShell, inspired by https://github.com/dfinke/ImportExcel, made possible by http://epplus.codeplex.com/
 
 ## Sample
@@ -25,10 +27,13 @@ New-XLFile -Path out.xlsx -PassThru |
 ```
 
 ## Todo
-* Add tests
+* Add more tests
 * Add parameter sets per chart type to Add-XLChart to enable type safe options
 * Add documentation
 * Add samples
+* Add Set-XLRange
+* Add Set-XLValue/Formula
+* Add Show/Hide-XLRange/Row/Column
 * Add pivot table/chart support
 * Add Get-* functions
 * Find shorter/cleaner syntax for Add-XLTable -Columns parameter

@@ -44,11 +44,12 @@ Describe "Save-XLFile/Sheet" {
         $lastWritTimeBefore = (Get-Item -Path $path).LastWriteTime
         It "Should be updated" {
             $path | Should Exist
+            Start-Sleep -Milliseconds 500
             Save-XLFile -Sheet (Get-XLSheet -File $xl -Index 1)
             $fileAfter = Get-Item -Path $path
             $path | Should Exist
             $lastWritTimeAfter = (Get-Item -Path $path).LastWriteTime
-            $lastWritTimeBefore -ne $lastWritTimeAfter | Should Be $true
+            $lastWritTimeBefore | Should Not Be $lastWritTimeAfter
         }
     }
     Context "File doesn't exist" {
