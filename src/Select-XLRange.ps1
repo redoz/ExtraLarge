@@ -22,6 +22,8 @@ param(
     [Switch]$HasHeaders = $false
 )  
 begin{
+}
+process {
     [OfficeOpenXml.ExcelRange]$range = $Sheet.Worksheet.Cells.Item($FromRow, $FromColumn, $ToRow, $ToColumn)
     
     if ($Headers -ne $null -and $Headers.Length -ne $range.Columns) {

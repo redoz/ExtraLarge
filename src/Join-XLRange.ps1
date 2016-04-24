@@ -26,6 +26,8 @@ param(
     [Switch]$PassThru = $false
 )  
 begin{
+}
+process {
     [OfficeOpenXml.ExcelRange]$excelRange = $null 
     if ($PSCmdlet.ParameterSetName -eq "Sheet") {
         $excelRange  = $Sheet.Worksheet.Cells.Item($FromRow, $FromColumn, $ToRow, $ToColumn)  

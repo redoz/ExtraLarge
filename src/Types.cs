@@ -4,6 +4,29 @@ using System.Collections;
 using System;
 using System.Text.RegularExpressions;
 
+public enum XLNumberFormat {
+    Text,
+    Date,
+    General,
+    Percent,
+    DateTime,
+    Time
+}
+
+public enum XLTotalsFunction {
+    Average=101,
+    Count=102,
+    CountA=103,
+    Max=104,
+    Min=105,
+    Product=106,
+    Stdev=107,
+    StdevP=108,
+    Sum=109,
+    Var=110,
+    VarP=111
+}
+
 public abstract class XLBase {
     protected XLBase(OfficeOpenXml.ExcelPackage owner) {
         this.Owner = owner;
@@ -59,13 +82,24 @@ public class XLRange : XLBase, IEnumerable<PSObject> {
     
     private static readonly Regex _dateTimeFormatMatch = new Regex("[ymdhs]|AM/PM", System.Text.RegularExpressions.RegexOptions.Compiled);
     
-    public XLRange(OfficeOpenXml.ExcelPackage owner, OfficeOpenXml.ExcelRange range) : base(owner) {
+    public XLRange(OfficeOpenXml.ExcelPackage owner, OfficeOpenXml.ExcelRangeBase range) : base(owner) {
         this.Range = range;
     }
     
-    public string Address { get { return this.Range.Address; } }
+    public string Name { 
+        get {
+            if (this.Range is OfficeOpenXml.ExcelNamedRange) {
+                return ((OfficeOpenXml.ExcelNamedRange)this.Range).Name;
+            } else {
+                return null;
+            }
+        }
+    }
+         
     
-    public OfficeOpenXml.ExcelRange Range {get; private set;}
+    public string Address { get { return this.Range.FullAddress; } }
+    
+    public OfficeOpenXml.ExcelRangeBase Range {get; private set;}
     
     public string[] Headers {get; set;}
     
