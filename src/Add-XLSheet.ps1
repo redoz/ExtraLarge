@@ -1,4 +1,4 @@
-﻿Function Add-XLSheet {
+Function Add-XLSheet {
 [CmdletBinding()]
 [OutputType([XLSheet])]
 param(

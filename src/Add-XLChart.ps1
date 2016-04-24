@@ -1,4 +1,4 @@
-﻿function Add-XLChart {
+function Add-XLChart {
 [OutputType([XLChart])]
 [CmdletBinding()]
 param(

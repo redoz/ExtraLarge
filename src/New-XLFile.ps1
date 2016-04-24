@@ -1,4 +1,4 @@
-﻿function New-XLFile {
+function New-XLFile {
 [OutputType([XLFile])]
 param(
     [Parameter(Position = 0, Mandatory=$true, ValueFromPipeline = $true)]
