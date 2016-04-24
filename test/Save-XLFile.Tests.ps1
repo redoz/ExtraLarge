@@ -8,6 +8,7 @@ Describe "Save-XLFile/File" {
         $lastWritTimeBefore = (Get-Item -Path $path).LastWriteTime
         It "Should be updated" {
             $path | Should Exist
+            Start-Sleep -Milliseconds 500
             Save-XLFile -File $xl
             $fileAfter = Get-Item -Path $path
             $path | Should Exist
