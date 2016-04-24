@@ -6,7 +6,8 @@
     [Parameter(Mandatory=$true)]
     $ServiceJobId,
     [Parameter(Mandatory=$true)]
-    $CodeCoverage)
+    $CodeCoverage,
+    $GitBranch = $null)
 
 # prepare coverage report
 $fileReports = [System.Collections.Generic.List[PSObject]]::new()
@@ -47,7 +48,7 @@ $commitData = New-Object -TypeName PSObject -Property @{
 
 $gitData = New-Object -TypeName PSObject -Property @{
                 head = $commitData
-                branch = & git rev-parse --abbrev-ref HEAD
+                branch = if ($GitBranch -ne $null) { $GitBranch } else { & git rev-parse --abbrev-ref HEAD }
             }
 
 $report = New-Object -TypeName PSOBject -Property @{
