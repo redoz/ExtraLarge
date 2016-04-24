@@ -1,5 +1,6 @@
 # ExtraLarge
 [![Build status](https://ci.appveyor.com/api/projects/status/mujcrkjo8hyjpy3r/branch/master?svg=true)](https://ci.appveyor.com/project/redoz/extralarge/branch/master)
+[![Coverage Status](https://coveralls.io/repos/github/redoz/ExtraLarge/badge.svg?branch=master)](https://coveralls.io/github/redoz/ExtraLarge?branch=master)
 
 Create Excel files using PowerShell, inspired by https://github.com/dfinke/ImportExcel, made possible by http://epplus.codeplex.com/
 
