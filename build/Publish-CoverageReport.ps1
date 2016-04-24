@@ -1,4 +1,12 @@
-﻿param([Parameter(Mandatory=$true)]$RepoToken, [Parameter(Mandatory=$true)]$CodeCoverage)
+﻿param(
+    [Parameter(Mandatory=$true)]
+    $RepoToken,
+    [Parameter(Mandatory=$true)]
+    $ServiceName,
+    [Parameter(Mandatory=$true)]
+    $ServiceJobId,
+    [Parameter(Mandatory=$true)]
+    $CodeCoverage)
 
 # prepare coverage report
 $fileReports = [System.Collections.Generic.List[PSObject]]::new()
@@ -29,7 +37,12 @@ foreach ($file in $CodeCoverage.AnalyzedFiles) {
 
     $fileReports.Add($fileReport)
 }
-$report = New-Object -TypeName PSOBject -Property @{repo_token = $RepoToken; source_files = $fileReports}
+$report = New-Object -TypeName PSOBject -Property @{
+                service_name = $ServiceName
+                service_job_id = $ServiceJobId
+                repo_token = $RepoToken
+                source_files = $fileReports
+            }
 $json = ConvertTo-Json -InputObject $report -Depth 3
 $url = 'https://coveralls.io/api/v1/jobs'
 
