@@ -37,13 +37,28 @@ foreach ($file in $CodeCoverage.AnalyzedFiles) {
 
     $fileReports.Add($fileReport)
 }
+
+$commitData = New-Object -TypeName PSObject -Property @{
+                id = & git rev-parse HEAD
+                author_name = & git show --format="%aN" --no-patch
+                author_email = & git show --format="%aE" --no-patch
+                message = (@(& git show --format="%B" --no-patch) -join "`n").Trim()
+            }
+
+$gitData = New-Object -TypeName PSObject -Property @{
+                head = $commitData
+                branch = & git rev-parse --abbrev-ref HEAD
+            }
+
 $report = New-Object -TypeName PSOBject -Property @{
                 service_name = $ServiceName
                 service_job_id = $ServiceJobId
                 repo_token = $RepoToken
                 source_files = $fileReports
+                git = $gitData
             }
-$json = ConvertTo-Json -InputObject $report -Depth 3
+            
+$json = ConvertTo-Json -InputObject $report -Depth 5
 $url = 'https://coveralls.io/api/v1/jobs'
 
 # upload coverage report
@@ -54,6 +69,10 @@ try {
     $fileContent = [System.Net.Http.StringContent]::new($json, [System.Text.Encoding]::UTF8, "application/json")
     $content.Add($fileContent, "json_file", "coverage-report.json");
     $response = $httpClient.PostAsync($url, $content).Result
+    
+    if ($response.StatusCode -ne [System.Net.HttpStatusCode]::OK) {
+        throw "$($resposne.StatusCode): $($resposne.ReasonPhrase)"
+    }
 } finally {
     $httpClient.Dispose()
 }
