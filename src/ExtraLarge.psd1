@@ -12,7 +12,7 @@
 RootModule = 'ExtraLarge.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.4'
+ModuleVersion = '0.1.0'
 
 # ID used to uniquely identify this module
 GUID = '6327d03e-5d72-4f9b-bcd2-a9fc1ea062fe'
@@ -27,7 +27,7 @@ CompanyName = 'ExtraLarge'
 Copyright = '(c) 2016 Patrik Husfloen. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Create Excel files using PowerShell'
+Description = 'Create and modify Excel files using PowerShell without any runtime requirements on Microsoft Excel.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 # PowerShellVersion = ''
@@ -84,7 +84,7 @@ AliasesToExport = '*'
 # ModuleList = @()
 
 # List of all files packaged with this module
-FileList = 'Add-XLChart.ps1', 'Add-XLSheet.ps1', 'Add-XLTable.ps1', 'EPPlus.dll', 'ExtraLarge.psd1', 'ExtraLarge.psm1', 'New-XLFile.ps1'
+FileList = 'Add-XLChart.ps1', 'Add-XLSheet.ps1', 'Add-XLTable.ps1', 'Clear-XLRange.ps1', 'EPPlus.dll', 'ExtraLarge.psd1', 'ExtraLarge.psm1', 'Get-XLFile.ps1', 'Get-XLSheet.ps1', 'Join-XLRange.ps1', 'New-XLFile.ps1', 'Save-XLFile.ps1', 'Select-XLRange.ps1', 'Set-XLValue.ps1', 'Split-XLRange.ps1', 'Types.cs'
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
 PrivateData = @{
