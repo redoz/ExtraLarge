@@ -1,6 +1,6 @@
 . .\test\Setup.ps1
 
-Describe "Add-XLSheet" {
+Describe "Add-XLSheet/File" {
     Context "Worksheet already exists" {
         [string]$path = Get-TestPath
         $xl = New-XLFile -Path $path -PassThru | Add-XLSheet -Name "X" -PassThru
@@ -29,20 +29,31 @@ Describe "Add-XLSheet" {
             $path | Should Exist
         }
     }
-    
-    Context "Passing file as Path" {
+}
+Describe "Add-XLSheet/Path" {    
+    Context "File doesn't exist" {
         It "Should throw if file does not exist" {
              { Add-XLSheet -Path (Get-TestPath -FileName 'NoFile.xslx') -Name "Y" } | Should Throw
         }
-        
-        It "Should work if file exists" {
-            [string]$path = Get-TestPath
-            $xl = New-XLFile -Path $path
-                  
-            Add-XLSheet -Path $path -Name "X" | %{$_ -is [XLSheet]} | Should Be $true
+    }
+    Context "File exists" {
+        [string]$path = Get-TestPath
+        $xl = New-XLFile -Path $path
+                    
+        It "Should return an [XLSheet] without -PassThru" {
+            Add-XLSheet -Path $path -Name "X" -Save | %{$_ -is [XLSheet]} | Should Be $true
             $path | Should Exist
             
-#            [OfficeOpenXml.ExcelPackage]::new($path)
+            $package = [OfficeOpenXml.ExcelPackage]::new($path)
+            $package.Workbook.Worksheets["X"] | Should Not Be $null
+        }
+        
+        It "Should return an [XLFile] with -PassThru" {
+            Add-XLSheet -Path $path -Name "Y" -PassThru -Save | %{$_ -is [XLFile]} | Should Be $true
+            $path | Should Exist
+            
+            $package = [OfficeOpenXml.ExcelPackage]::new($path)
+            $package.Workbook.Worksheets["Y"] | Should Not Be $null
         }
     }
 }

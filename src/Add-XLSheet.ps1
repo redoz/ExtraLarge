@@ -11,7 +11,8 @@ param(
     [string]$Hidden = $false,
     [switch]$Force = $false,
     [switch]$PassThru = $false,
-    [scriptblock]$With = $null
+    [scriptblock]$With = $null,
+    [switch]$Save = $false
 )
 begin{}
 process{
@@ -34,17 +35,21 @@ process{
     }
 
     $worksheet = [XLSheet]::new($package, $package.Workbook.Worksheets.Add($Name))
+    
+    if ($Save.IsPresent) {
+        $package.Save()
+    }
 
     if ($With -ne $null) {
         $worksheet | ForEach-Object -Process $With
     }
 
     if ($PassThru.IsPresent) {
-        if ($File -ne $null) {
-            Write-Output -InputObject $File
-        } else {
-            Write-Output -InputObject [XLFile]::new($package)
+        if ($File -eq $null) {
+            $File = [XLFile]::new($package)
         }
+        
+        Write-Output -InputObject $File
     } else {
         Write-Output -InputObject $worksheet
     }
