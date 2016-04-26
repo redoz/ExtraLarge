@@ -15,17 +15,14 @@ foreach ($file in $CodeCoverage.AnalyzedFiles) {
     Write-Verbose -Message "Processing coverage for: $file" -Verbose
     $fileName = [System.IO.Path]::GetFileName($file)
     $digest = Get-FileHash -LiteralPath $file -Algorithm MD5
-    
-    $fileHits = $CodeCoverage.HitCommands.Where({$_.File -eq $file})
-    $fileMisses = $CodeCoverage.MissedCommands.Where({$_.File -eq $file})
 
     $lineCount = (Get-Content -LiteralPath $file).Count
 
     $lines = [System.Collections.Generic.Dictionary[int,object]]::new($lineCount)
 
-    $fileMisses.ForEach({$lines[$_.Line] = 0})
-    $fileHits.ForEach({$lines[$_.Line] = 1})
-        
+    $CodeCoverage.MissedCommands.Where({$_.File -eq $file}).ForEach({$lines[$_.Line] = 0})
+    $CodeCoverage.HitCommands.Where({$_.File -eq $file}).ForEach({$lines[$_.Line] = 1})
+
     for ($lineNum = 1; $lineNum -le $lineCount; $lineNum++) {
         if (-not $lines.ContainsKey($lineNum)) {
             $lines.Add($lineNum, $null)
