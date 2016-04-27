@@ -10,7 +10,10 @@ try {
 } catch  {
     Write-Warning -Message ('Failed to load ExtraLarge types: ' + $_)
 }
+# internal
+. $PSScriptRoot\Resolve-XLRange.ps1
 
+# public
 . $PSScriptRoot\New-XLFile.ps1
 . $PSScriptRoot\Add-XLSheet.ps1
 . $PSScriptRoot\Add-XLTable.ps1

@@ -20,7 +20,8 @@ Describe "Set-XLValue/Sheet" {
         $sheet = New-XLFile -Path $path -PassThru | Add-XLSheet -Name "X"
                     
         It "Should return [XLSheet]" {
-            Set-XLValue -Sheet $sheet -FromColumn 2 -ToColumn 4 -FromRow 2 -ToRow 4 -Value 99 -PassThru | %{$_ -is [XLSheet]} | Should Be $true
+            $ret = Set-XLValue -Sheet $sheet -FromColumn 2 -ToColumn 4 -FromRow 2 -ToRow 4 -Value 99 -PassThru
+            $ret -is [XLSheet] | Should Be $true
             Test-Range -Sheet $sheet
         }
     }
@@ -28,8 +29,9 @@ Describe "Set-XLValue/Sheet" {
         [string]$path = Get-TestPath
         $sheet = New-XLFile -Path $path -PassThru | Add-XLSheet -Name "X"
                     
-        It "Should return nothing" {
-            Set-XLValue -Sheet $sheet -FromColumn 2 -ToColumn 4 -FromRow 2 -ToRow 4 -Value 99 | %{$_ -is [XLRange]} | Should Be $true
+        It "Should return [XLRange]" {
+            $ret = Set-XLValue -Sheet $sheet -FromColumn 2 -ToColumn 4 -FromRow 2 -ToRow 4 -Value 99 
+            $ret -is [XLRange] | Should Be $true
             Test-Range -Sheet $sheet            
         }
     }
@@ -42,7 +44,8 @@ Describe "Set-XLValue/Range" {
                     
         It "Should return [XLRange]" {
             $range = Select-XLRange -Sheet $sheet -FromColumn 2 -ToColumn 4 -FromRow 2 -ToRow 4
-            Set-XLValue -Range $range -Value 99 -PassThru | %{$_ -is [XLRange]} | Should Be $true
+            $ret = Set-XLValue -Range $range -Value 99 -PassThru
+            $ret -is [XLRange] | Should Be $true
             Test-Range -Sheet $sheet       
         }
     }
@@ -52,7 +55,8 @@ Describe "Set-XLValue/Range" {
                     
         It "Should return nothing" {
             $range = Select-XLRange -Sheet $sheet -FromColumn 2 -ToColumn 4 -FromRow 2 -ToRow 4
-            Set-XLValue -Range $range -Value 99 | %{$_ -is [XLRange]} | Should Be $true
+            $ret = Set-XLValue -Range $range -Value 99        
+            $ret -is [XLRange] | Should Be $true
             Test-Range -Sheet $sheet
         }
     }  
@@ -63,19 +67,21 @@ Describe "Set-XLValue/Named" {
     Context "With -PassThru" {
         [string]$path = Get-TestPath
         Copy-Item -Path (Join-Path -Path $PSScriptRoot -ChildPath "data\WithNamedRange.xlsx") -Destination $path
-        $sheet = Get-XLFile -Path $path | Get-XLSheet            
+        $sheet = Get-XLFile -Path $path | Get-XLSheet -Index 1      
         It "Should return [XLSheet]" {
-            Set-XLValue -Sheet $sheet -Name "Name" -Value 99 -PassThru | %{$_ -is [XLSheet]} | Should Be $true
+            $ret = Set-XLValue -Sheet $sheet -Name "Name" -Value 99 -PassThru 
+            $ret -is [XLSheet] | Should Be $true
             Test-Range -Sheet $sheet
         }
     }
     Context "Without -PassThru" {
         [string]$path = Get-TestPath
         Copy-Item -Path (Join-Path -Path $PSScriptRoot -ChildPath "data\WithNamedRange.xlsx") -Destination $path
-        $sheet = Get-XLFile -Path $path | Get-XLSheet      
+        $sheet = Get-XLFile -Path $path | Get-XLSheet -Index 1
                     
-        It "Should return nothing" {
-            Set-XLValue -Sheet $sheet -Name "Name" -Value 99 | %{$_ -is [XLRange]} | Should Be $true
+        It "Should return [XLRange]" {
+            $ret = Set-XLValue -Sheet $sheet -Name "Name" -Value 99 
+            $ret -is [XLRange] | Should Be $true
             Test-Range -Sheet $sheet            
         }
     } 

@@ -1,48 +1,58 @@
 function Split-XLRange {
-[OutputType([XLRange], ParameterSetName = "Range")]
-[OutputType([XLSheet], ParameterSetName = "Sheet")]
+[OutputType([XLRange])]
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true, ParameterSetName = "Range")]
     [XLRange]$Range,
-    
-    [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true, ParameterSetName = "Sheet")]
+
+    [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true, ParameterSetName = "SheetAndRC")]
+    [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true, ParameterSetName = "SheetAndName")]
+    [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true, ParameterSetName = "SheetAndAddress")]    
     [XLSheet]$Sheet,
     
-    [Parameter(Mandatory = $true, Position = 1, ParameterSetName = "Sheet")]
+    [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true, ParameterSetName = "FileAndName")]
+    [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline=$true, ParameterSetName = "FileAndAddress")]
+    [XLFile]$File,
+
+    [Parameter(Mandatory = $true, Position = 1, ParameterSetName = "SheetAndRC")]
     [Alias("Row")]
     [int]$FromRow,
-    
-    [Parameter(Mandatory = $true, ParameterSetName = "Sheet")]
-    [int]$ToRow,
-    
-    [Parameter(Mandatory = $true, Position = 2, ParameterSetName = "Sheet")]
+
+    [Parameter(ParameterSetName = "SheetAndRC")]
+    [int]$ToRow = $FromRow,
+
+    [Parameter(Mandatory = $true, Position = 2, ParameterSetName = "SheetAndRC")]
     [Alias("Column")]
     [int]$FromColumn,
+
+    [Parameter(ParameterSetName = "SheetAndRC")]
+    [int]$ToColumn = $FromColumn,
     
-    [Parameter(Mandatory = $true, ParameterSetName = "Sheet")]
-    [int]$ToColumn,
+    [Parameter(ParameterSetName = "SheetAndName")]
+    [XLScope]$Scope = [XLScope]::Any,
+
+    [Parameter(Mandatory = $true, ParameterSetName = "FileAndName")]
+    [Parameter(Mandatory = $true, ParameterSetName = "SheetAndName")]
+    [string]$Name,
+    
+    [Parameter(Mandatory = $true, ParameterSetName = "FileAndAddress")]
+    [Parameter(Mandatory = $true, ParameterSetName = "SheetAndAddress")]
+    [string]$Address,
     
     [Switch]$PassThru = $false
 )  
 begin{
 }
-process {     
-    $excelRange = $null 
-    if ($PSCmdlet.ParameterSetName -eq "Sheet") {
-        $excelRange  = $Sheet.Worksheet.Cells.Item($FromRow, $FromColumn, $ToRow, $ToColumn)  
-    } else {
-        $excelRange = $Range.Range 
-    }
-    
-    $excelRange.Merge = $false
+process {  
+    [void]$PSBoundParameters.Remove('PassThru')
+    $res = Resolve-XLRange @PSBoundParameters
+
+    $res.Range.Range.Merge = $false
     
     if ($PassThru.IsPresent) {
-        if ($PSCmdlet.ParameterSetName -eq "Sheet") {
-            $PSCmdlet.WriteObject($Sheet, $false);
-        } else {
-            $PSCmdlet.WriteObject($Range, $false);
-        }
+        $PSCmdlet.WriteObject($res.InputObject, $false);
+    } else {
+        $PSCmdlet.WriteObject($res.Range, $false);
     }
 }
 end{}
