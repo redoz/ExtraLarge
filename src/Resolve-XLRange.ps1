@@ -68,14 +68,15 @@ param(
         $xlRange = [XLRange]::new($Sheet.Owner, $namedRange)
         $inputObject = $Sheet
     } elseif ($PSCmdlet.ParameterSetName -eq 'FileAndName') {
-        $xlRange = $File.Package.Workbook.Names[$Name]
+        $namedRange = $null
+        if ($File.Package.Workbook.Names.ContainsKey($Name)) {
+            $namedRange = $File.Package.Workbook.Names[$Name]
+        } else {
+            throw "Could not resolve range named '$Name'"
+        }
+        $xlRange = [XLRange]::new($File.Package, $namedRange)
         $inputObject = $File
-    }elseif ($PSCmdlet.ParameterSetName -eq 'FileAndAddress') {
-        $match = $Script:AddressRegex.Match($Address)
-        $xlRange = $File.Package.Workbook.Names[$Name]
-        
-        $inputObject = $File
-    }elseif ($PSCmdlet.ParameterSetName.EndsWith('Address')) {
+    } elseif ($PSCmdlet.ParameterSetName.EndsWith('Address')) {
         $match = $Script:AddressRegex.Match($Address)
         if (-not $match.Success) {
             throw "Invalid address: '$Address'"
