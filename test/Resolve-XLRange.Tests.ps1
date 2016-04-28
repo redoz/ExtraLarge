@@ -103,6 +103,85 @@ Describe "Resolve-XLRange/SheetAndName" {
 }
 
 Describe "Resolve-XLRange/SheetAndRC" {
+    $path = Join-Path $TestDrive 'test.xlsx'
+    Copy-Item -Path .\test\data\WithNamedRange.xlsx -Destination $path
+    $xlFile = Get-XLFile -Path $path 
+    $xlSheet = Get-XLSheet -File $xlFile -Name "Sheet1"
+
+    Context "With valid -Row and -Column" {
+        
+        $res = Resolve-XLRange -Sheet $xlSheet -Row 2 -Column 2 
+        
+        It "Range should be an [XLRange]" {
+            $res.Range -is [XLRange] | Should Be $true
+        }
+        
+        It "Returned range should contain exactly 1 row and 1 column" {
+            $res.Range.Range.Columns | Should Be 1
+            $res.Range.Range.Rows | Should Be 1
+        }
+        
+        It "Returned range should have address B2" {
+            $res.Range.Range.Address | Should be "B2"
+        }
+        
+        It "InputObject should same as -Sheet parameter" {
+            [Object]::ReferenceEquals($res.InputObject, $xlSheet) | Should be $true
+        }
+    }
+    
+    Context "With oob -Row and -Column" {
+        It "Should thrown an exception" {
+             { Resolve-XLRange -Sheet $xlSheet -Row 0 -Column 0 } | Should Throw
+        }
+    }    
+    
+    Context "With oob -Row" {
+        It "Should thrown an exception" {
+             { Resolve-XLRange -Sheet $xlSheet -Row 0 -Column 4 } | Should Throw
+        }
+    }    
+    
+    Context "With oob -Column" {
+        It "Should thrown an exception" {
+             { Resolve-XLRange -Sheet $xlSheet -Row 4 -Column 0 } | Should Throw
+        }
+    }       
+
+    Context "With valid -FromRow -ToRow and -FromColumn -ToColumn" {
+        
+        $res = Resolve-XLRange -Sheet $xlSheet -FromRow 2 -FromColumn 2 -ToRow 4 -ToColumn 4
+        
+        It "Range should be an [XLRange]" {
+            $res.Range -is [XLRange] | Should Be $true
+        }
+        
+        It "Returned range should contain exactly 3 rows and 3 columns" {
+            $res.Range.Range.Columns | Should Be 3
+            $res.Range.Range.Rows | Should Be 3
+        }
+        
+        It "Returned range should have address B2:D4" {
+            $res.Range.Range.Start.Address | Should be "B2"
+            $res.Range.Range.End.Address | Should be "D4"
+        }
+        
+        It "InputObject should same as -Sheet parameter" {
+            [Object]::ReferenceEquals($res.InputObject, $xlSheet) | Should be $true
+        }
+    }   
+    
+    Context "With swaped -FromRow -ToRow" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -Sheet $xlSheet -FromRow 4 -FromColumn 2 -ToRow 2 -ToColumn 4 } | Should Throw
+        }
+    }   
+    
+    Context "With swaped -FromColumn -ToColumn" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -Sheet $xlSheet -FromRow 2 -FromColumn 4 -ToRow 4 -ToColumn 2 } | Should Throw
+        }
+    }   
 }
 
 Describe "Resolve-XLRange/FileAndName" {
