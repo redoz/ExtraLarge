@@ -55,11 +55,11 @@ param(
         $inputObject = $Sheet
     } elseif ($PSCmdlet.ParameterSetName -eq 'SheetAndName') {
         $namedRange = $null
-        if ($Scope -band [XLScope]::File -and $Sheet.Worksheet.Names.ContainsKey($Name)) {
+        if ($Scope -band [XLScope]::Sheet -and $Sheet.Worksheet.Names.ContainsKey($Name)) {
             $namedRange = $Sheet.Worksheet.Names[$Name]
         }
         
-        if ($namedRange -eq $null -and $Scope -band [XLScope]::Sheet -and $Sheet.Worksheet.Workbook.Names.ContainsKey($Name)) {
+        if ($namedRange -eq $null -and $Scope -band [XLScope]::File -and $Sheet.Worksheet.Workbook.Names.ContainsKey($Name)) {
             $namedRange = $Sheet.Worksheet.Workbook.Names[$Name]
         }
         if ($namedRange -eq $null) {
