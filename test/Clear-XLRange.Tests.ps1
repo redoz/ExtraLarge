@@ -6,7 +6,7 @@ Describe "Clear-XLRange" {
         Copy-Item -Path .\test\data\WithNamedRange.xlsx -Destination $path
         $xlFile = Get-XLFile -Path $path 
         
-        $res = Clear-XLRange -File $xlFile -Address -PassThru "Sheet2!B2:B4"
+        $res = Clear-XLRange -File $xlFile -Address  "Sheet2!B2:B4" -PassThru
                     
         It "Should return [XLFile]" {
             $res -is [XLFile] | Should Be $true
@@ -14,9 +14,9 @@ Describe "Clear-XLRange" {
         
         It "Should have cleared data" {
             $xlSheet = $xlFile | Get-XLSheet -Index 2
-            $xlSheet.Worksheet.Cells["B2"].Value | Should Be ''
-            $xlSheet.Worksheet.Cells["B3"].Value | Should Be ''
-            $xlSheet.Worksheet.Cells["B4"].Value | Should Be ''
+            $xlSheet.Worksheet.Cells["B2"].Value | Should Be $null
+            $xlSheet.Worksheet.Cells["B3"].Value | Should Be $null
+            $xlSheet.Worksheet.Cells["B4"].Value | Should Be $null
         }
     }
     Context "Without -PassThru" {
@@ -32,9 +32,9 @@ Describe "Clear-XLRange" {
         
         It "Should have cleared data" {
             $xlSheet = $xlFile | Get-XLSheet -Index 2
-            $xlSheet.Worksheet.Cells["B2"].Value | Should Be ''
-            $xlSheet.Worksheet.Cells["B3"].Value | Should Be ''
-            $xlSheet.Worksheet.Cells["B4"].Value | Should Be ''
+            $xlSheet.Worksheet.Cells["B2"].Value | Should Be $null
+            $xlSheet.Worksheet.Cells["B3"].Value | Should Be $null
+            $xlSheet.Worksheet.Cells["B4"].Value | Should Be $null
         }
     }
 }
