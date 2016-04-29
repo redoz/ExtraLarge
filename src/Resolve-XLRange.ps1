@@ -3,7 +3,7 @@
 ^(?:(?<sheet>[^!]+)!)?
      (?:((?<r1c1>R\d+C\d+(?::R\d+C\d+)?))|
         (?<a1>[A-Z]+\d+(?::[A-Z]+\d+)?))$
-"@, [System.Text.RegularExpressions.RegexOptions]::Compiled -bor [System.Text.RegularExpressions.RegexOptions]::IgnorePatternWhitespace)
+"@, [System.Text.RegularExpressions.RegexOptions]::Compiled -bor [System.Text.RegularExpressions.RegexOptions]::IgnorePatternWhitespace  -bor [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 
 function Resolve-XLRange {
 [CmdletBinding()]
@@ -81,8 +81,8 @@ param(
         if (-not $match.Success) {
             throw "Invalid address: '$Address'"
         }
-        
-        [OfficeOpenXml.ExeclWorksheet]$targetSheet = $null
+                
+        [OfficeOpenXml.ExcelWorksheet]$targetSheet = $null
         if ($match.Groups['sheet'].Success) {
             $sheetName = $match.Groups['sheet'].Value
             $workbook = $null
@@ -106,12 +106,35 @@ param(
         $a1 = $null
         if ($match.Groups['r1c1'].Success) {
             $a1 = [OfficeOpenXml.ExcelCellBase]::TranslateFromR1C1($match.Groups['r1c1'].Value, 0, 0)
+            if ($a1 -match "#REF") {
+                throw "Invalid address: '$($match.Groups['r1c1'].Value)'"
+            }
         } else {
             $a1 = $match.Groups['a1'].Value
         }
         
+        $owner = $null
+        if ($PSCmdlet.ParameterSetName.StartsWith('File')) {
+            $owner = $File.Package
+            $inputObject = $File
+        } elseif ($PSCmdlet.ParameterSetName.StartsWith('Sheet')) {
+            $owner = $Sheet.Owner
+            $inputObject = $Sheet
+        }
+        
+        if (-not [OfficeOpenXml.FormulaParsing.ExcelUtilities.ExcelAddressUtil]::IsValidAddress($a1)) {
+            throw "Invalid address: '$a1'"
+        }
+        
+        # couldn't find a better way to validate
+        $excelAddress = [OfficeOpenXml.ExcelCellAddress]::new($a1)
+        if ($excelAddress.Row -eq 0 -or $excelAddress.Column -eq 0) {
+            throw "Invalid address: '$a1'"
+        }
+        
         $excelRange = $targetSheet.Cells[$a1]
-        $xlRange = [XLRange]::new($Sheet.Owner, $excelRange)
+        
+        $xlRange = [XLRange]::new($owner, $excelRange)
     }
     [pscustomobject][ordered]@{
         Range = $xlRange

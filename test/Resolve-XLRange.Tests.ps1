@@ -225,7 +225,35 @@ Describe "Resolve-XLRange/FileAndName" {
 }
 
 Describe "Resolve-XLRange/SheetAndAddress" {
+
 }
 
 Describe "Resolve-XLRange/FileAndAddress" {
-}
+    $path = Join-Path $TestDrive 'test.xlsx'
+    Copy-Item -Path .\test\data\WithNamedRange.xlsx -Destination $path
+    $xlFile = Get-XLFile -Path $path 
+    
+    Context "A1 address without sheet information" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -File $xlFile -Address "A1" } | Should Throw "No sheet specified in address: 'A1'"
+        }
+    }
+    
+    Context "R1C1 address without sheet information" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -File $xlFile -Address "R1C1" } | Should Throw "No sheet specified in address: 'R1C1'"
+        }
+    }
+    
+    Context "Invalid A1 address with sheet information" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -File $xlFile -Address "Sheet1!A0" } | Should Throw "Invalid address: 'A0'"
+        }
+    } 
+    
+    Context "Invalid R1C1 address with sheet information" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -File $xlFile -Address "Sheet1!R0C0" } | Should Throw "Invalid address: 'R0C0'"
+        }
+    }    
+}    
