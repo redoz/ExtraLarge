@@ -225,7 +225,222 @@ Describe "Resolve-XLRange/FileAndName" {
 }
 
 Describe "Resolve-XLRange/SheetAndAddress" {
+    $path = Join-Path $TestDrive 'test.xlsx'
+    Copy-Item -Path .\test\data\WithNamedRange.xlsx -Destination $path
+    $xlFile = Get-XLFile -Path $path 
+    $xlSheet = Get-XLSheet -File $xlFile -Index 1
+    
+    Context "A1 address without sheet information" {
+        $res = Resolve-XLRange -Sheet $xlSheet -Address "A1"
+        $xlRange = $res.Range
+        
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    }
+    
+    Context "R1C1 address without sheet information" {
+        $res = Resolve-XLRange -Sheet $xlSheet -Address "R1C1"
+        $xlRange = $res.Range
+        
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    }
+    
+    Context "Invalid A1 address with sheet information" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -Sheet $xlSheet -Address "Sheet1!A0" } | Should Throw "Invalid address: 'A0'"
+        }
+    } 
+    
+    Context "Invalid R1C1 address with sheet information" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -Sheet $xlSheet -Address "Sheet1!R0C0" } | Should Throw "Invalid address: 'R0C0'"
+        }
+    }    
+    
+    Context "Bogus address" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -Sheet $xlSheet -Address "XYZ" } | Should Throw "Invalid address: 'XYZ'"
+        }
+    } 
+    
+    Context "Non-existing sheet" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -Sheet $xlSheet -Address "Sheet3!A1" } | Should Throw "Sheet not found: 'Sheet3'"
+        }
+    } 
+    
+    Context "Valid sheet and single cell A1 address" {
+        $res = Resolve-XLRange -Sheet $xlSheet -Address "Sheet2!A1"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    } 
+    
+    Context "Valid sheet and single cell R1C1 address" {
+        $res = Resolve-XLRange -Sheet $xlSheet -Address "Sheet2!R1C1"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "The sheet should match address" {
+            $xlRange.Range.Worksheet.Name | Should Be "Sheet2"
+        }
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    }
+    
+    Context "Valid sheet and single cell A1 address" {
+        $res = Resolve-XLRange -Sheet $xlSheet -Address "Sheet2!A1"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
 
+        It "The sheet should match address" {
+            $xlRange.Range.Worksheet.Name | Should Be "Sheet2"
+        }        
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    } 
+    
+    Context "Valid sheet and single cell R1C1 address" {
+        $res = Resolve-XLRange -Sheet $xlSheet -Address "Sheet2!R1C1"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "The sheet should match address" {
+            $xlRange.Range.Worksheet.Name | Should Be "Sheet2"
+        }        
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    }    
+    
+    Context "Valid sheet and A1 address range" {
+        $res = Resolve-XLRange -Sheet $xlSheet -Address "Sheet2!A1:C3"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "The sheet should match address" {
+            $xlRange.Range.Worksheet.Name | Should Be "Sheet2"
+        }
+        
+        It "Range width and height should equal 3" {
+            $xlRange.Range.Columns | Should Be 3
+            $xlRange.Range.Rows | Should Be 3
+        }
+        
+        It "Start address Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+        }
+        
+        It "End address Row and Column should equal 3" {
+            $xlRange.Range.End.Row | Should Be 3
+            $xlRange.Range.End.Column | Should Be 3
+        }
+    } 
+    
+    Context "Valid sheet and R1C1 address range" {
+        $res = Resolve-XLRange -Sheet $xlSheet -Address "Sheet2!R1C1:R3C3"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "The sheet should match address" {
+            $xlRange.Range.Worksheet.Name | Should Be "Sheet2"
+        }
+        
+        It "Range width and height should equal 3" {
+            $xlRange.Range.Columns | Should Be 3
+            $xlRange.Range.Rows | Should Be 3
+        }
+        
+        It "Start address Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+        }
+        
+        It "End address Row and Column should equal 3" {
+            $xlRange.Range.End.Row | Should Be 3
+            $xlRange.Range.End.Column | Should Be 3
+        }
+    }   
 }
 
 Describe "Resolve-XLRange/FileAndAddress" {
@@ -256,4 +471,142 @@ Describe "Resolve-XLRange/FileAndAddress" {
             { Resolve-XLRange -File $xlFile -Address "Sheet1!R0C0" } | Should Throw "Invalid address: 'R0C0'"
         }
     }    
+    
+    Context "Bogus address" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -File $xlFile -Address "XYZ" } | Should Throw "Invalid address: 'XYZ'"
+        }
+    } 
+    
+    Context "Non-existing sheet" {
+        It "Should throw an exception" {
+            { Resolve-XLRange -File $xlFile -Address "Sheet3!A1" } | Should Throw "Sheet not found: 'Sheet3'"
+        }
+    } 
+    
+    Context "Valid sheet and single cell A1 address" {
+        $res = Resolve-XLRange -File $xlFile -Address "Sheet1!A1"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    } 
+    
+    Context "Valid sheet and single cell R1C1 address" {
+        $res = Resolve-XLRange -File $xlFile -Address "Sheet1!R1C1"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    }
+    
+    Context "Valid sheet and single cell A1 address" {
+        $res = Resolve-XLRange -File $xlFile -Address "Sheet1!A1"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    } 
+    
+    Context "Valid sheet and single cell R1C1 address" {
+        $res = Resolve-XLRange -File $xlFile -Address "Sheet1!R1C1"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "Range width and height should equal 1" {
+            $xlRange.Range.Columns | Should Be 1
+            $xlRange.Range.Rows | Should Be 1
+        }
+        
+        It "Range Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+            $xlRange.Range.End.Row | Should Be 1
+            $xlRange.Range.End.Column | Should Be 1
+        }
+    }    
+    
+    Context "Valid sheet and A1 address range" {
+        $res = Resolve-XLRange -File $xlFile -Address "Sheet1!A1:C3"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "Range width and height should equal 3" {
+            $xlRange.Range.Columns | Should Be 3
+            $xlRange.Range.Rows | Should Be 3
+        }
+        
+        It "Start address Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+        }
+        
+        It "End address Row and Column should equal 3" {
+            $xlRange.Range.End.Row | Should Be 3
+            $xlRange.Range.End.Column | Should Be 3
+        }
+    } 
+    
+    Context "Valid sheet and R1C1 address range" {
+        $res = Resolve-XLRange -File $xlFile -Address "Sheet1!R1C1:R3C3"
+        $xlRange = $res.Range
+        It "Should not return null" {
+            $xlRange | Should Not Be $null
+        }
+        
+        It "Range width and height should equal 3" {
+            $xlRange.Range.Columns | Should Be 3
+            $xlRange.Range.Rows | Should Be 3
+        }
+        
+        It "Start address Row and Column should equal 1" {
+            $xlRange.Range.Start.Row | Should Be 1
+            $xlRange.Range.Start.Column | Should Be 1
+        }
+        
+        It "End address Row and Column should equal 3" {
+            $xlRange.Range.End.Row | Should Be 3
+            $xlRange.Range.End.Column | Should Be 3
+        }
+    }   
 }    

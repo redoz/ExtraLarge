@@ -127,9 +127,11 @@ param(
         }
         
         # couldn't find a better way to validate
-        $excelAddress = [OfficeOpenXml.ExcelCellAddress]::new($a1)
-        if ($excelAddress.Row -eq 0 -or $excelAddress.Column -eq 0) {
-            throw "Invalid address: '$a1'"
+        $a1 -split ':' | ForEach-Object -Process {
+            $excelAddress = [OfficeOpenXml.ExcelCellAddress]::new($_)
+            if ($excelAddress.Row -eq 0 -or $excelAddress.Column -eq 0) {
+                throw "Invalid address: '$a1'"
+            }
         }
         
         $excelRange = $targetSheet.Cells[$a1]
