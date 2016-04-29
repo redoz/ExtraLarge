@@ -1,16 +1,5 @@
 . .\test\Setup.ps1
 
-function Test-Range {
-    param ($Sheet)
-    $worksheet = $Sheet.Worksheet
-    $worksheet.MergedCells.Count | Should Be 1
-    $address = [OfficeOpenXml.ExcelAddress]$worksheet.MergedCells[0]
-    $address.Start.Row | Should Be 2
-    $address.Start.Column | Should Be 2
-    $address.End.Row | Should Be 4
-    $address.End.Column | Should Be 4          
-}
-
 Describe "Clear-XLRange" {
     Context "With -PassThru" {
         $path = Join-Path $TestDrive 'test.xlsx'
