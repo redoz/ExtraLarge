@@ -181,12 +181,17 @@ process{
                 if ($value -eq $null -or $value -eq '' -or ($value -is [Single] -and [Single]::IsNaN($value)) -or ($value -is [Double] -and [Double]::IsNaN($value))) {
                     $colValue = $colDef.Default;
                 } else {
-                    Invoke-Expression "`$result = [$colType]`$value"
-                    if ($result -eq $null) {
+                    try {
+                        Invoke-Expression "`$result = [$colType]`$value"
+                        if ($result -eq $null) {
+                            Write-Warning -Message "Failed to convert value '$value' to type '$colType'";
+                            $colValue = $colDef.Default;
+                        } else {
+                            $colValue = $result;
+                        }                        
+                    } catch {
                         Write-Warning -Message "Failed to convert value '$value' to type '$colType'";
                         $colValue = $colDef.Default;
-                    } else {
-                        $colValue = $result;
                     }
                 }
             } else {
@@ -205,6 +210,8 @@ process{
                     "DateTime" { $cellFmt.Format = "yyyy-mm-dd h:mm.ss" }
                     "Time" { $cellFmt.Format = "h:mm.ss" }
                 }
+            } elseif ($colValue -eq $null) {
+                $cell.Formula = '=NA()'
             }
             $currentColumn++;
         }

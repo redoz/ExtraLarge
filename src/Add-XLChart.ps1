@@ -86,6 +86,7 @@ param(
     [string]$XSeries,
     [Parameter(Mandatory = $true)]
     [string]$YSeries,
+    [switch]$Secondary = $false,
     [object]$Type = $null,
     [switch]$PassThru = $false
 )
@@ -101,18 +102,37 @@ process{
         throw "XSeries was not provided and the chart doesn't have one specified."
     }
     
-    if ($Type -eq $null) { 
-        $series = $excelChart.Series.Add($YSeries, $XSeries);
-    } else {
-        $subChart = $excelChart.PlotArea.ChartTypes | Where-Object -FilterScript {$_.ChartType -eq [OfficeOpenXml.Drawing.Chart.eChartType]$Type}
-        if ($subChart -eq $null) {
-            $subChart = $excelChart.PlotArea.ChartTypes.Add([OfficeOpenXml.Drawing.Chart.eChartType]$Type);
+    $currentChart = $null
+    if ($Type -eq $null) {
+        if ($excelChart.UseSecondaryAxis -eq $Secondary.IsPresent) {
+            $currentChart = $excelChart
+        } else {
+            # no type is defined, and the base chart doesn't match, we don't have a suitable chart to operate on
+            throw "Type is not specified and the XLChart provided settings incompatible with the current series."
         }
-        $series = $subChart.Series.Add($YSeries, $XSeries);
+    } else {
+        # find matching subchart
+        $currentChart = @($excelChart.PlotArea.ChartTypes | Where-Object -FilterScript  { $_.ChartType -eq [OfficeOpenXml.Drawing.Chart.eChartType]$Type -and $_.UseSecondaryAxis -eq $Secondary.IsPresent})
+        if ($currentChart.Count -gt 0) {
+            if ($currentChart.Count -gt 1) {
+                Write-Warning "Multiple matching charts found, picking the first one. Request new feature if you need to be able specify an explicit sub-chart."
+            }
+            $currentChart = $currentChart[0]
+        } else {
+            $currentChart = $excelChart.PlotArea.ChartTypes.Add([OfficeOpenXml.Drawing.Chart.eChartType]$Type)
+        }
     }
+    
+    $series = $currentChart.Series.Add($YSeries, $XSeries)
+    
     if ($Header -ne $null) {
-        $series.Header = [string]$Header;
-    }
+        $series.Header = [string]$Header
+    }    
+    
+    if ($Secondary.IsPresent) {
+        $currentChart.UseSecondaryAxis = $true
+    }  
+
     if ($PassThru.IsPresent) {
         $Chart
     }
