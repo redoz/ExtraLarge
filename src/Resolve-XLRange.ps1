@@ -51,6 +51,12 @@ param(
         $xlRange = $Range
         $inputObject = $Range
     } elseif ($PSCmdlet.ParameterSetName -eq 'SheetAndRC') {
+        if ($FromRow -gt $ToRow) {
+            throw "Invalid range, FromRow ($FromRow) must be less than or equal to ToRow ($ToRow)"
+        } elseif ($FromColumn -gt $ToColumn) {
+            throw "Invalid range, FromColumn ($FromColumn) must be less than or equal to ToColumn ($ToColumn)"
+        }
+        
         $xlRange = [XLRange]::new($Sheet.Owner, $Sheet.Worksheet.Cells.Item($FromRow, $FromColumn, $ToRow, $ToColumn))
         $inputObject = $Sheet
     } elseif ($PSCmdlet.ParameterSetName -eq 'SheetAndName') {
