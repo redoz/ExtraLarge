@@ -7,7 +7,7 @@ param(
     [XLFile]$File,
     [Parameter(ParameterSetName = "Sheet", Mandatory = $true, ValueFromPipeline = $true, Position = 0)]
     [XLSheet]$Sheet,
-    
+    [System.IO.FileInfo]$Path,
     [switch]$PassThru = $false
 )
 begin{}
@@ -19,12 +19,16 @@ process{
         $package = $Sheet.Owner
     }
     
-    if ($package -eq $null)
+    if ($null -eq $package)
     {
         throw "Unable to save, no ExcelPackage found."
     }
     
-    $package.Save();
+    if ($null -ne $Path) {
+        $package.SaveAs($Path);
+    } else {
+        $package.Save();
+    }
     
     if ($PassThru.IsPresent) {
         if ($PSCmdlet.ParameterSetName -eq "File") {

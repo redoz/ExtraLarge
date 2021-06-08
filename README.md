@@ -1,7 +1,6 @@
 # ExtraLarge
 [![Build status](https://ci.appveyor.com/api/projects/status/mujcrkjo8hyjpy3r/branch/master?svg=true)](https://ci.appveyor.com/project/redoz/extralarge/branch/master)
 [![Coverage Status](https://coveralls.io/repos/github/redoz/ExtraLarge/badge.svg?branch=master)](https://coveralls.io/github/redoz/ExtraLarge?branch=master)
-[![Join the chat at https://gitter.im/redoz/ExtraLarge](https://badges.gitter.im/redoz/ExtraLarge.svg)](https://gitter.im/redoz/ExtraLarge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 *This project is not dead, it just reached a point where it did what I needed it to, if you need it to do more, please file an issue.*
 

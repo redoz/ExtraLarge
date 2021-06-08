@@ -8,12 +8,14 @@ if (-not $module -or $module.ModuleBase -ne $modulePath) {
 }
 
 function Get-TestPath {
-    param($FileName = "Test.xlsx")
+    param(
+        $FileName = "Test.xlsx"
+    )
     
-    [string]$path = Join-Path $TestDrive "test.xslx";
+    [string]$path = Join-Path -Path ((Get-PSDrive TestDrive).Root) -ChildPath $FileName;
     if (Test-Path -Path $path) {
         Remove-Item -Path $path -Force
     }
     
     return $path
-}
+}   

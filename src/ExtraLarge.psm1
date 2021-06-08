@@ -1,16 +1,5 @@
-Set-StrictMode -Version 5
+Set-StrictMode -Version Latest
 
-
-$typeDefinitionPath = Join-Path -Path $PSScriptRoot -ChildPath 'Types.cs'
-[string]$typeDefinitions = Get-Content -Path $typeDefinitionPath -Raw -Encoding UTF8
-
-$epplusPath = Join-Path -Path $PSScriptRoot -ChildPath 'EPPlus.dll'
-try {
-    Add-Type -TypeDefinition $typeDefinitions -ReferencedAssemblies $epplusPath
-} catch  {
-    Write-Warning -Message ('Failed to load ExtraLarge types: ' + $_)
-}
-# internal
 . $PSScriptRoot\Resolve-XLRange.ps1
 
 # public

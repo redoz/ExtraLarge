@@ -58,7 +58,7 @@ process {
     
     $Range.Range.Value = $Value
 
-    if ($NumberFormat -ne $null) {
+    if ($null -ne $NumberFormat) {
         $cellFmt = $Range.Range.Style.Numberformat
         
         if ($NumberFormat -is [string]) {

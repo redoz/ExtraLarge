@@ -1,93 +1,13 @@
-using System.Management.Automation;
-using System.Collections.Generic;
-using System.Collections;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Management.Automation;
 using System.Text.RegularExpressions;
-
-[Flags]
-public enum XLScope {
-    File = 2,
-    Sheet = 1,
-    Any = 3
-}
-
-public enum XLNumberFormat {
-    Text,
-    Date,
-    General,
-    Percent,
-    DateTime,
-    Time
-}
-
-public enum XLTotalsFunction {
-    Average=101,
-    Count=102,
-    CountA=103,
-    Max=104,
-    Min=105,
-    Product=106,
-    Stdev=107,
-    StdevP=108,
-    Sum=109,
-    Var=110,
-    VarP=111
-}
-
-public abstract class XLBase {
-    protected XLBase(OfficeOpenXml.ExcelPackage owner) {
-        this.Owner = owner;
-    }
-    public bool HasOwner { get { return this.Owner != null; }}
-    public OfficeOpenXml.ExcelPackage Owner {get; private set;}
-}
-
-public class XLFile
-{
-    public XLFile(OfficeOpenXml.ExcelPackage package) {
-        this.Package = package;
-    }
-    public OfficeOpenXml.ExcelPackage Package {get; private set;}
-    
-    public void Save() {
-        this.Package.Save();
-    }
-    
-    public static implicit operator XLFile(OfficeOpenXml.ExcelPackage package) {
-        return new XLFile(package);
-    }
-}
-
-public class XLChart : XLBase {
-    public XLChart(OfficeOpenXml.ExcelPackage owner, OfficeOpenXml.Drawing.Chart.ExcelChart chart) : base(owner) {
-        this.Chart = chart;
-    }
-    public OfficeOpenXml.Drawing.Chart.ExcelChart Chart {get; private set;}
-    
-    public string XSeries {get; set;}
-    
-    public static implicit operator XLChart(OfficeOpenXml.Drawing.Chart.ExcelChart chart) {
-        return new XLChart(null, chart);
-    }
-}
-
-public class XLSheet : XLBase {
-    public XLSheet(OfficeOpenXml.ExcelPackage owner, OfficeOpenXml.ExcelWorksheet worksheet) : base(owner) {
-        this.Worksheet = worksheet;
-    }
-    
-    public string Name { get { return this.Worksheet.Name; } }
-    
-    public OfficeOpenXml.ExcelWorksheet Worksheet {get; private set;}
-    
-    public static implicit operator XLSheet(OfficeOpenXml.ExcelWorksheet sheet) {
-        return new XLSheet(null, sheet);
-    }
-}
+using OfficeOpenXml;
 
 public class XLRange : XLBase, IEnumerable<PSObject> {
     
-    private static readonly Regex _dateTimeFormatMatch = new Regex("[ymdhs]|AM/PM", System.Text.RegularExpressions.RegexOptions.Compiled);
+    private static readonly Regex DateTimeFormatMatch = new Regex("[ymdhs]|AM/PM", System.Text.RegularExpressions.RegexOptions.Compiled);
     
     public XLRange(OfficeOpenXml.ExcelPackage owner, OfficeOpenXml.ExcelRangeBase range) : base(owner) {
         this.Range = range;
@@ -95,8 +15,8 @@ public class XLRange : XLBase, IEnumerable<PSObject> {
     
     public string Name { 
         get {
-            if (this.Range is OfficeOpenXml.ExcelNamedRange) {
-                return ((OfficeOpenXml.ExcelNamedRange)this.Range).Name;
+            if (this.Range is ExcelNamedRange range) {
+                return range.Name;
             } else {
                 return null;
             }
@@ -104,8 +24,8 @@ public class XLRange : XLBase, IEnumerable<PSObject> {
     }
          
     
-    public string Address { get { return this.Range.FullAddress; } }
-    
+    public string Address => this.Range.FullAddress;
+
     public OfficeOpenXml.ExcelRangeBase Range {get; private set;}
     
     public string[] Headers {get; set;}
@@ -162,8 +82,8 @@ public class XLRange : XLBase, IEnumerable<PSObject> {
                             case 36:
                             case 50:
                             case 57:
-                               if (cell.Value is double)
-                                    cellValue = DateTime.FromOADate((double)cell.Value);
+                                if (cell.Value is double value)
+                                    cellValue = DateTime.FromOADate(value);
                                 else
                                     cellValue = cell.Value;
                                 break;
@@ -171,8 +91,8 @@ public class XLRange : XLBase, IEnumerable<PSObject> {
                                 cellValue = cell.Value;
                                 break;
                         }   
-                    } else if (cell.Value is double && _dateTimeFormatMatch.IsMatch(cell.Style.Numberformat.Format)) {
-                        cellValue = DateTime.FromOADate((double)cell.Value);
+                    } else if (cell.Value is double value && DateTimeFormatMatch.IsMatch(cell.Style.Numberformat.Format)) {
+                        cellValue = DateTime.FromOADate(value);
                     } else
                         cellValue = cell.Value;    
                 } else {

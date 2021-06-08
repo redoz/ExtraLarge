@@ -67,7 +67,12 @@ param(
     [switch]$PassThru = $false
 )  
 begin{
+    
     #validate some input
+    if (-not [OfficeOpenXml.FormulaParsing.ExcelUtilities.ExcelAddressUtil]::IsValidName($Name)) {
+        throw "Table name is invalid: '$Name'"
+    }
+    
     if ($Columns -ne $null) {
         $Columns = $Columns | ForEach-Object -Process {
                 switch ($_) {
